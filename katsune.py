@@ -18,18 +18,30 @@ bottoken = sensitivedata["bottoken"]
 robloxapikey = sensitivedata["robloxapikey"]
 
 # [ variables ]
-# --normal--
+# --data--
+defaultkatsuprofile = {"AboutMe": "", "DisplayRoblox": False, "DisplaySupporter": False, "DisplayGoodNoodles": False, "Pfp": "Discord", "DisplayName": "DiscordDisplay", "Name": "DiscordUser"}
+
+# --discord--
+bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+# OOO is replaced by @user for welcome and leave messages
 welcomemessages = ["OOO joined the server! Welcome!", "OOO.Parent = discord.Servers[\"Ghost Hunt (Roblox)\"]", "Another fellow ghost hunter joined us! Welcome OOO!", "OOO joined the asylum, they can never leave!"]
 leavemessages = ["We were right, OOO didn't enjoy their stay!", "An unexpected error occurred and OOO needs to quit. We're sorry!", "OOO pressed the leave button on accident", "Shutting down OOO..."]
-memberjoinleavechannel = 1125568412882583552
+memberjoinleavechannelid = 1125568412882583552
+verificationchannelid = 1129962618346553450
+etanuserid = 723053854194663456
+catulususerid = 627196747676123146
+verifiedroleid = 1129960240922759218
 adminroleids = [883261775510921256, 883261098059522078]
+emojilist = ["👻", "💸", "💡", "💥", "🍬", "🤖", "🖥️", "🎮"]
+ghosthuntserver = None
 
 # --other--
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+pfpdisplays = ["Discord", "Roblox", "Custom"] # the pfps that can be displayed on katsuprofiles
+namedisplays = ["DiscordDisplay", "DiscordUser", "RobloxDisplay", "RobloxUser"] # the names and displaynames that can be displayed on katsuprofiles
 
 # [ functions ]
 # --internal--
-def saveData(store, newdata): # Saves data to a specified .pkl file
+def saveData(store: str, newdata: dict): # Saves data to a specified .pkl file
     try:
         with open(f"{store}.pkl", "wb") as file:
             pickle.dump(newdata, file)
@@ -38,7 +50,7 @@ def saveData(store, newdata): # Saves data to a specified .pkl file
         traceback.print_exc()
         return False # Otherwise return false
 
-def loadData(store): # Gets data from a specified .pkl file
+def loadData(store: str): # Gets data from a specified .pkl file
     try:
         with open(f"{store}.pkl", "rb") as file:
             return pickle.load(file) # Return file data if it succeeds
@@ -46,7 +58,7 @@ def loadData(store): # Gets data from a specified .pkl file
         traceback.print_exc()
         return "" # Otherwise return an empty string
 
-def formatUsername(user): # Fancy formatting for usernames // displayname (@username)
+def formatUsername(user: discord.User): # Fancy formatting for usernames // displayname (@username)
     if user.global_name == None:
         return f"{user.name}"
     else:
@@ -54,12 +66,61 @@ def formatUsername(user): # Fancy formatting for usernames // displayname (@user
 
 # --discord--
 async def sendwelcome(membermention): # sends a welcome message
-    channel = bot.get_channel(memberjoinleavechannel)
-    channel.send(welcomemessages[random.randint(1, len(welcomemessages) - 1)].replace("OOO", membermention))
+    channel = bot.get_channel(memberjoinleavechannelid)
+    await channel.send(welcomemessages[random.randint(1, len(welcomemessages) - 1)].replace("OOO", membermention))
 
 async def sendbye(membermention): # sends a goodbye message
-    channel = bot.get_channel(memberjoinleavechannel)
-    channel.send(leavemessages[random.randint(1, len(leavemessages) - 1)].replace("OOO", membermention))
+    channel = bot.get_channel(memberjoinleavechannelid)
+    await channel.send(leavemessages[random.randint(1, len(leavemessages) - 1)].replace("OOO", membermention))
+
+async def changerpc(newrpc: str): # changes the bot's rpc (playing [game])
+    await bot.change_presence(activity=discord.Game(newrpc), status=discord.Status.online)
+
+async def sendVerificationSystem(): # sends the verify button in the verification channel (ew nested code EW EW EW)
+    class ConfirmButtonVerify(discord.ui.View): # verify button !!
+        def __init__(self):
+            super().__init__(timeout=None) # no button timeout
+        @discord.ui.button(label="Verify", style=discord.ButtonStyle.green)
+        async def confirmbuttonverify(self, interaction, button):
+            usedemojilist = random.sample(emojilist, 5)
+            realemoji = random.sample(usedemojilist, 1)[0]
+
+            async def nowayitsabutton(self, interaction, button, number): # function for a button
+                if usedemojilist[number] == realemoji: # no way they verified !!!
+                    await interaction.response.send_message(content="One second, verifying you...", ephemeral=True)
+                    try:
+                        role = ghosthuntserver.get_role(verifiedroleid)
+                        await interaction.user.add_roles(role)
+                    except Exception:
+                        print(f"{formatUsername(interaction.user)} attempted to verify and errored, error logs:")
+                        traceback.print_exc()
+                        await interaction.edit_original_response(content="Failed to verify! Please report this error to @etangaming123.")
+                else:
+                    await interaction.response.send_message(content="That doesn't seem to be the right emoji, try again.", ephemeral=True)
+                        
+            class TheOtherVerifyButtons(discord.ui.View): # select the ghost: [emoji] [emoji] [emoji] idk
+                @discord.ui.button(label=usedemojilist[0], style=discord.ButtonStyle.blurple) # literally just copy the buttons 5 times
+                async def thefirstbutton(self, interaction, button):
+                    await nowayitsabutton(self, interaction, button, 0)
+                
+                @discord.ui.button(label=usedemojilist[1], style=discord.ButtonStyle.blurple)
+                async def thesecondbutton(self, interaction, button):
+                    await nowayitsabutton(self, interaction, button, 1)
+
+                @discord.ui.button(label=usedemojilist[2], style=discord.ButtonStyle.blurple)
+                async def thethirdbutton(self, interaction, button):
+                    await nowayitsabutton(self, interaction, button, 2)
+
+                @discord.ui.button(label=usedemojilist[3], style=discord.ButtonStyle.blurple)
+                async def thefourthbutton(self, interaction, button):
+                    await nowayitsabutton(self, interaction, button, 3)
+
+                @discord.ui.button(label=usedemojilist[4], style=discord.ButtonStyle.blurple)
+                async def thefifthbutton(self, interaction, button):
+                    await nowayitsabutton(self, interaction, button, 4)
+
+            await interaction.response.send_message(content=f"Click the [{realemoji}] to verify!", ephemeral=True, view=TheOtherVerifyButtons())
+    await verificationchannel.send(content="Click the verify button to gain access to the server!", view=ConfirmButtonVerify())
 
 # --roblox--
 def getDiscordUserID(robloxid): # gets the discord user id that is linked to a roblox account
@@ -88,7 +149,7 @@ def setDiscordUserID(robloxid, discordid): # sets the discord user id for a robl
         olddata = loadData("linkedrobloxaccounts")
         if olddata == "":
             return False # return false if this fails
-        olddata[discordid] = {"RobloxID": robloxid, "Verified": False}
+        olddata[discordid] = {"RobloxID": robloxid, "Verified": False, "Supporter": False} # Don't you want me like I want you, baby? (i was bored ok)
         return saveData("linkedrobloxaccounts", olddata) # this function returns true if it succeeds
     else:
         print(f"Failed to link Roblox {robloxid} with {discordid} // {response.json()}")
@@ -148,7 +209,17 @@ def getRobloxDetails(username: str): # gets details of a roblox account
 # [ events ]
 @bot.event
 async def on_ready():
-    await bot.tree.sync()
+    global ghosthuntserver
+    global verificationchannel
+    print("Syncing commands...")
+    await bot.tree.sync() # this syncs slash commands to server
+    print("Changing RPC...")
+    await changerpc("Roblox [Ghost Hunt]")
+    print("Setting up variables...")
+    ghosthuntserver = await bot.fetch_guild(883235310580957234)
+    verificationchannel = bot.get_channel(verificationchannelid)
+    print("Sending verification system...")
+    await sendVerificationSystem()
     print("Bot is ready!")
 
 @bot.event
@@ -332,4 +403,28 @@ async def addConversationStarter(interaction: discord.Interaction, conversation_
     except Exception:
         await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
 
+# --fun--
+@bot.tree.command(name="random-number", description="Picks a random number from 1 to your choice!")
+@app_commands.describe(maxnumber="The maximum number the bot can pick")
+async def randomNumber(interaction: discord.Interaction, maxnumber: int):
+    await interaction.response.send_message(f"Your random number is {str(random.randint(1, maxnumber))}\n-# Number picked from 1 to {str(maxnumber)}")
+
+@bot.tree.command(name="change-status", description="Changes the status of the Katsune bot! Only avaliable to etangaming123 and _catulus.")
+@app_commands.describe(state="Playing [state]")
+async def changestatus(interaction: discord.Interaction, state: str):
+    try:
+        await changerpc(state)
+        await interaction.response.send_message(f"Changed status to {state}!!", ephemeral=True)
+    except Exception:
+        print(f"{formatUsername(interaction.user)} executed /change-status and errored, error logs:")
+        traceback.print_exc()
+        await interaction.response.send_message("An error occured while changing bot status. Please report this to etangaming123.", ephemeral=True)
+
 bot.run(bottoken)
+
+# other information
+# ! - warning (e.g something doesn't work)
+# ? - concern (e.g "you sure bro?")
+# * - important info (e.g placeholder code)
+# TODO: self explanatory
+# anything else without a symbol is just information about the code or other comments

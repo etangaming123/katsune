@@ -1,5 +1,6 @@
-""">> Katsune Source Code <<"""
+""">> Katsune [version number on alpha release here] <<""" # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
+# btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
 import discord
 from discord.ext import commands
@@ -9,13 +10,23 @@ import random
 import traceback
 import requests
 import json
+import os
 
 # [ set information ]
 # basically, since i don't want to share the discord bot token and roblox api keys i put them in a separate json
-with open("keys.json", "rb") as file:
+with open("keys.json", "rb") as file: # {"bottoken": "Discord Bot Token", "robloxapikey": "Key to access datastores in a Roblox experience"}
     sensitivedata = json.load(file)
 bottoken = sensitivedata["bottoken"]
 robloxapikey = sensitivedata["robloxapikey"]
+
+# [ data setup ]
+# if the .pkl files are not found, katsune will automatically create them
+datastores = ["readnotices", "bannedanons", "conversationstarters", "katsuprofiles", "linkedrobloxaccounts", "anonymousmessages"]
+for item in datastores:
+    if not os.path.exists(f"{item}.pkl"):
+        with open(f"{item}.pkl", "wb") as file:
+            pickle.dump({}, file)
+        print(f"Created new file [{item}.pkl]")
 
 # [ variables ]
 # --data--
@@ -26,14 +37,18 @@ bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 # OOO is replaced by @user for welcome and leave messages
 welcomemessages = ["OOO joined the server! Welcome!", "OOO.Parent = discord.Servers[\"Ghost Hunt (Roblox)\"]", "Another fellow ghost hunter joined us! Welcome OOO!", "OOO joined the asylum, they can never leave!"]
 leavemessages = ["We were right, OOO didn't enjoy their stay!", "An unexpected error occurred and OOO needs to quit. We're sorry!", "OOO pressed the leave button on accident", "Shutting down OOO..."]
-memberjoinleavechannelid = 1125568412882583552
-verificationchannelid = 1129962618346553450
-etanuserid = 723053854194663456
-catulususerid = 627196747676123146
-verifiedroleid = 1129960240922759218
-adminroleids = [883261775510921256, 883261098059522078]
-emojilist = ["👻", "💸", "💡", "💥", "🍬", "🤖", "🖥️", "🎮"]
-ghosthuntserver = None
+memberjoinleavechannelid = 1125568412882583552 # channel id to say when a user leaves or joins
+verificationchannelid = 1129962618346553450 # channel to send verification confirmation message
+anonchannelid = 1128811704726339614 # channel to send anonymous messages
+katsunelogid = 1233388519075086366 # channel to send anonymous message reports, etc
+verifiedroleid = 1129960240922759218 # the verified role's id
+adminroleids = [883261775510921256, 883261098059522078] # users with these role ids gain specific permisions
+powerusers = [723053854194663456, 627196747676123146] # users with these ids gain even more perms, but do not have the same perms as the above
+robloxgameid = 6869030592 # roblox: the game id that has its datastores linked or smth
+gamepassids = [] # gamepass ids for katsune supporter
+emojilist = ["👻", "💸", "💡", "💥", "🍬", "🤖", "🖥️", "🎮", "🔨"] # supports any string
+ghosthuntserverid = 883235310580957234 # the id of the bot's current server
+ghosthuntserver = None # set to none for now, this will be initialised later
 
 # --other--
 pfpdisplays = ["Discord", "Roblox", "Custom"] # the pfps that can be displayed on katsuprofiles
@@ -42,6 +57,7 @@ namedisplays = ["DiscordDisplay", "DiscordUser", "RobloxDisplay", "RobloxUser"] 
 # [ functions ]
 # --internal--
 def saveData(store: str, newdata: dict): # Saves data to a specified .pkl file
+    print(f"Saving [{store}]...")
     try:
         with open(f"{store}.pkl", "wb") as file:
             pickle.dump(newdata, file)
@@ -51,6 +67,7 @@ def saveData(store: str, newdata: dict): # Saves data to a specified .pkl file
         return False # Otherwise return false
 
 def loadData(store: str): # Gets data from a specified .pkl file
+    print(f"Loading [{store}]...")
     try:
         with open(f"{store}.pkl", "rb") as file:
             return pickle.load(file) # Return file data if it succeeds
@@ -87,6 +104,7 @@ async def sendVerificationSystem(): # sends the verify button in the verificatio
 
             async def nowayitsabutton(self, interaction, button, number): # function for a button
                 if usedemojilist[number] == realemoji: # no way they verified !!!
+                    print(f"{formatUsername(interaction.user)} has verified successfully!")
                     await interaction.response.send_message(content="One second, verifying you...", ephemeral=True)
                     try:
                         role = ghosthuntserver.get_role(verifiedroleid)
@@ -121,10 +139,11 @@ async def sendVerificationSystem(): # sends the verify button in the verificatio
 
             await interaction.response.send_message(content=f"Click the [{realemoji}] to verify!", ephemeral=True, view=TheOtherVerifyButtons())
     await verificationchannel.send(content="Click the verify button to gain access to the server!", view=ConfirmButtonVerify())
-
+        
 # --roblox--
 def getDiscordUserID(robloxid): # gets the discord user id that is linked to a roblox account
-    url = f"https://apis.roblox.com/cloud/v2/universes/6869030592/data-stores/DiscordDatastore/entries?id={robloxid}"
+    print(f"Getting Discord ID from Roblox ID [{robloxid}]...")
+    url = f"https://apis.roblox.com/cloud/v2/universes/{robloxgameid}/data-stores/DiscordDatastore/entries?id={robloxid}"
     headers = {"x-api-key": robloxapikey}
     response = requests.get(url=url, headers=headers)
     if response.status_code == 200:
@@ -138,8 +157,8 @@ def getDiscordUserID(robloxid): # gets the discord user id that is linked to a r
         return False # return false if something fails
 
 def setDiscordUserID(robloxid, discordid): # sets the discord user id for a roblox account
-    print(discordid)
-    url = f"https://apis.roblox.com/cloud/v2/universes/6869030592/data-stores/DiscordDatastore/entries?id={robloxid}"
+    print(f"Setting Roblox ID {robloxid} to Discord ID {discordid}")
+    url = f"https://apis.roblox.com/cloud/v2/universes/{robloxgameid}/data-stores/DiscordDatastore/entries?id={robloxid}"
     headers = {"x-api-key": robloxapikey}
     payload = {
         "value": str(discordid)
@@ -156,7 +175,8 @@ def setDiscordUserID(robloxid, discordid): # sets the discord user id for a robl
         return False
 
 def getVerificationStatus(robloxid): # checks if user has entered katsune verification place and hit "verify"
-    url = f"https://apis.roblox.com/cloud/v2/universes/6869030592/data-stores/IsVerifiedDatastore/entries?id={robloxid}"
+    print(f"Getting verification status for {robloxid}")
+    url = f"https://apis.roblox.com/cloud/v2/universes/{robloxgameid}/data-stores/IsVerifiedDatastore/entries?id={robloxid}"
     headers = {"x-api-key": robloxapikey}
     response = requests.get(url, headers=headers)
     if response.status_code == 200: # it doesn't matter what the value is, as long as the value is set (value as in the datastore entry)
@@ -166,14 +186,15 @@ def getVerificationStatus(robloxid): # checks if user has entered katsune verifi
         return False
 
 def unlinkUser(discordid, robloxid): # self explanatory (also returns true if succeeds, false if fails)
-    url = f"https://apis.roblox.com/cloud/v2/universes/6869030592/data-stores/DiscordDatastore/entries/{robloxid}"
-    url2 = f"https://apis.roblox.com/cloud/v2/universes/6869030592/data-stores/IsVerifiedDatastore/entries/{robloxid}"
+    print(f"Unlinking Roblox ID {robloxid} and Discord ID {discordid}")
+    url = f"https://apis.roblox.com/cloud/v2/universes/{robloxgameid}/data-stores/DiscordDatastore/entries/{robloxid}"
+    url2 = f"https://apis.roblox.com/cloud/v2/universes/{robloxgameid}/data-stores/IsVerifiedDatastore/entries/{robloxid}"
     headers = {"x-api-key": robloxapikey}
 
     response1 = requests.delete(url=url, headers=headers)
     response2 = requests.delete(url=url2, headers=headers)
 
-    if response1.status_code == 200 or response1.status_code == 404 and response2.status_code == 200 or response2.status_code == 404: # not found requests are ignored idk how to explain it
+    if response1.status_code == 200 or response1.status_code == 404 and response2.status_code == 200 or response2.status_code == 404: # not found requests are ignored, as they are already deleted according to roblox's documentation
         olddata = loadData("linkedrobloxaccounts")
         if olddata == "":
             return False
@@ -184,6 +205,7 @@ def unlinkUser(discordid, robloxid): # self explanatory (also returns true if su
         return False
 
 def getRobloxDetails(username: str): # gets details of a roblox account
+    print(f"Getting Roblox details of Roblox username {username}")
     url = "https://users.roblox.com/v1/usernames/users"
     
     payload = {
@@ -216,7 +238,7 @@ async def on_ready():
     print("Changing RPC...")
     await changerpc("Roblox [Ghost Hunt]")
     print("Setting up variables...")
-    ghosthuntserver = await bot.fetch_guild(883235310580957234)
+    ghosthuntserver = await bot.fetch_guild(ghosthuntserverid) # there we go !
     verificationchannel = bot.get_channel(verificationchannelid)
     print("Sending verification system...")
     await sendVerificationSystem()
@@ -230,11 +252,12 @@ async def on_member_join(member):
 async def on_member_leave(member):
     await sendbye(member.mention)
 
-# [ slash commands ]
+# [ slash commands + others ]
 # --roblox--
 @bot.tree.command(name="verify-step-1", description="Verify your Roblox account with Discord! (Step 1)")
 @app_commands.describe(username="Your Roblox username")
 async def verifystep1(interaction: discord.Interaction, username: str):
+    print(f"{formatUsername(interaction.user)} executed /verify-step-1")
     await interaction.response.send_message(content=f"# >> Katsune Verification <<\n\> Getting details...", ephemeral=True)
     try:
         data = loadData("linkedrobloxaccounts")
@@ -274,6 +297,7 @@ async def verifystep1(interaction: discord.Interaction, username: str):
 
 @bot.tree.command(name="verify-step-2", description="Verify your Roblox account with Discord! (Step 2)")
 async def verifystep2(interaction: discord.Interaction):
+    print(f"{formatUsername(interaction.user)} executed /verify-step-2")
     await interaction.response.send_message(content="# >> Katsune Verification <<\n\> Confirming verification...", ephemeral=True)
     try:
         data = loadData("linkedrobloxaccounts")
@@ -298,6 +322,7 @@ async def verifystep2(interaction: discord.Interaction):
 
 @bot.tree.command(name="unlink-roblox", description="Unlinks your Roblox account with Discord!")
 async def unlinkroblox(interaction: discord.Interaction):
+    print(f"{formatUsername(interaction.user)} executed /unlink-roblox")
     await interaction.response.send_message(content="# >> Katsune Verification <<\n\> Unlinking your Roblox account...", ephemeral=True)
     try:
         data = loadData("linkedrobloxaccounts")
@@ -317,13 +342,14 @@ async def unlinkroblox(interaction: discord.Interaction):
 # --conversation starters--
 @bot.tree.command(name="conversation-starter", description="Get a conversation starter!")
 async def getConversationStarter(interaction: discord.Interaction):
+    print(f"{formatUsername(interaction.user)} executed /conversation-starter")
     await interaction.response.send_message(content="# >> Conversation Starters <<\n\> Getting random conversation starter...")
     try:
         data = loadData("conversationstarters")
         if data == "":
             await interaction.edit_original_response(content="# >> Conversation Starters <<\n\- Getting random conversation starter...\> An error occured while reading internal data.")
             return
-        number = random(0, len(data) - 1)
+        number = random(0, len(data) - 1) # pick random
         await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n\- Getting random conversation starter...\n\> \"{data[str(number)]}\" (ID: {str(number)})")
     except Exception:
         print(f"{formatUsername(interaction.user)} executed /conversation-starter and errored, error logs:")
@@ -333,6 +359,7 @@ async def getConversationStarter(interaction: discord.Interaction):
 @bot.tree.command(name="add-conversation-starter", description="[ONLY AVALIABLE TO ADMINS AND ABOVE] Adds a conversation starter!")
 @app_commands.describe(conversation_starter="The conversation starter to add")
 async def addConversationStarter(interaction: discord.Interaction, conversation_starter: str):
+    print(f"{formatUsername(interaction.user)} executed /add-conversation-starter")
     haspermissions = False
     for role in interaction.user.roles:
         if role.id in adminroleids:
@@ -364,6 +391,7 @@ async def addConversationStarter(interaction: discord.Interaction, conversation_
 @bot.tree.command(name="delete-conversation-starter", description="[ONLY AVALIABLE TO ADMINS AND ABOVE] Deletes a conversation starter!")
 @app_commands.describe(conversation_starter_id="The conversation starter to delete (MUST BE AN ID)")
 async def addConversationStarter(interaction: discord.Interaction, conversation_starter_id: int):
+    print(f"{formatUsername(interaction.user)} executed /delete-conversation-starter")
     haspermissions = False
     for role in interaction.user.roles:
         if role.id in adminroleids:
@@ -403,6 +431,159 @@ async def addConversationStarter(interaction: discord.Interaction, conversation_
     except Exception:
         await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
 
+# --anonymous messages--
+# anon messages do not have print() functions as to maximise well anonymous something
+class AnonForm(discord.ui.Modal, title='Anonymous Message Form'): # this isn't a slash command but ok !
+    message = discord.ui.TextInput(
+        label='Your message',
+        style=discord.TextStyle.long,
+        placeholder='This message will be sent anonymously.',
+        required=True,
+        max_length=2000,
+    )
+
+    attachment = discord.ui.TextInput(
+        label='Attachents',
+        placeholder='Add an optional image link here.',
+        required=False
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.send_message(f'Saving data and posting to channel...', ephemeral=True)
+        anonmessages = loadData("anonymousmessages")
+        if anonmessages == "":
+            await interaction.edit_original_response(content="Failed to load anonymous message data! Please report this error to @etangaming123.")
+        try:
+            anonchannel = await bot.fetch_channel(anonchannelid)
+            internalanonid = len(anonmessages) + 1
+            message = str(self.message)
+            if self.attachment == "" or self.attachment == None:
+                anonmessages[internalanonid] = {"UserID": interaction.user.id, "Message": message, "Attachment": ""}
+                anonembed = discord.Embed(title="Anonymous message", description=self.message)
+            else:
+                anonmessages[internalanonid] = {"UserID": interaction.user.id, "Message": message, "Attachment": str(self.attachment)}
+                anonembed = discord.Embed(title="Anonymous message", description=message)
+                anonembed.set_image(url=str(self.attachment))
+            if saveData("anonymousmessages", anonmessages):
+                anonembed.set_footer(text=f"If this anonymous message breaks the rules, please run /manage-anon {internalanonid} and click \"report\".")
+                message = await anonchannel.send(embed=anonembed)
+                anonmessages[internalanonid]["MessageID"] = message.id
+                saveData("anonymousmessages", anonmessages)
+            else:
+                await interaction.edit_original_response(content="Failed to save anonymous message data! Please report this error to @etangaming123.")
+        except Exception:
+            traceback.print_exc()
+            await interaction.edit_original_response(content="An unaccounted error occured! Please report this error to @etangaming123.")
+
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        await interaction.response.send_message('Something went wrong whist trying to submit your anonymous message. Please report this error to @etangaming123.', ephemeral=True)
+        traceback.print_exception(type(error), error, error.__traceback__)
+
+@bot.tree.command(name="send-anon", description="Sends an anonymous message!")
+async def sendanonymousmessage(interaction: discord.Interaction):
+    banneduserlist = loadData("bannedanons")
+    if banneduserlist == "":
+        await interaction.response.send_message("Failed to get banned user list, please try again!", ephemeral=True)
+        return
+    if interaction.user.id in banneduserlist:
+        await interaction.response.send_message("You are banned from using this command, sorry!", ephemeral=True)
+        return
+    anonmessagedata = loadData("anonymousmessages")
+    if anonmessagedata == "":
+        await interaction.response.send_message("Something went wrong while trying to load anonymous message data. please try again!", ephemeral=True)
+        return
+    await interaction.response.send_modal(AnonForm())
+
+@bot.tree.command(name="manage-anon", description="Can be used to report an anonymous message, or deleting if it's your message.")
+@app_commands.describe(id="The ID of the anonymous message to manage.")
+async def manageanonymousmessage(interaction: discord.Interaction, id: int):
+    await interaction.response.send_message("One second, getting anon message data...", ephemeral=True)
+    anonmessagedata = loadData("anonymousmessages")
+    if anonmessagedata == "":
+        await interaction.edit_original_response(content="Failed to load anon message data! Please report this error to @etangaming123.")
+        return
+    if not id in anonmessagedata.keys():
+        await interaction.edit_original_response(content="That anonymous message does not exist!")
+        return
+    isyourself = anonmessagedata[id]["UserID"] == interaction.user.id # if the user running the command is the same person as the poster of the message idk 
+    isadmin = False
+    if not isyourself: # intentional
+        for item in interaction.user.roles:
+            if item.id in adminroleids:
+                isadmin = True
+                break
+    
+    async def reportAnonMessage(interaction, message, id):
+        loggingchannel = await bot.fetch_channel(katsunelogid)
+        reportEmbed = discord.Embed(title=f"Report by {formatUsername(interaction.user)}", description=f"The user has reported an anonymous message with the following content:\n\n\"{message}\"")
+        reportEmbed.set_footer(text=f"The image for this anon message, if any, was removed. If this report is genuine, run /manage-anon {id} and either delete the message or ban the user from making anonymous messages.")
+        await loggingchannel.send(embed=reportEmbed)
+        await interaction.response.send_message("Report submitted! Thanks for making Ghost Hunt a better place :3", ephemeral=True) # :3
+
+    async def banAnonUser(interaction, anondata):
+        bannedusers = loadData("bannedanons")
+        if bannedusers == "":
+            await interaction.response.send_message("Failed to load banned anons! Please try again.", ephemeral=True)
+            return
+        bannedusers[anondata["UserID"]] = interaction.user.id # {userthatwasbanned: userthatbannedtheuserthatwasbanned}
+        if saveData("bannedanons", bannedusers):
+            await interaction.response.send_message("Banned anon user sucessfully!", ephemeral=True)
+            return
+        await interaction.response.send_message("Failed to save banned anons! Please try again.", ephemeral=True)
+        
+    async def unbanAnonUser(interaction, anondata):
+        bannedusers = loadData("bannedanons")
+        if bannedusers == "":
+            await interaction.response.send_message("Failed to load banned anons! Please try again.", ephemeral=True)
+            return
+        if anondata["UserID"] in bannedusers.keys():
+            del bannedusers[anondata["UserID"]]
+            if saveData("bannedanons", bannedusers):
+                await interaction.response.send_message("Unbanned anon user sucessfully!", ephemeral=True)
+                return
+            await interaction.response.send_message("Failed to save banned anons! Please try again.", ephemeral=True)
+        await interaction.response.send_message("This user was never banned in the first place, nothing changed.", ephemeral=True)
+
+    async def deleteAnonMessage(interaction, anonmessageid): 
+        anonchannel = await bot.fetch_channel(anonchannelid)
+        message = await anonchannel.fetch_message(anonmessageid)
+        await bot.delete_message(message)
+        await interaction.response.send_message("Deleted that message!", ephemeral=True)
+
+    if isyourself:
+        class manageAnonMessageYourself(discord.ui.View):
+            @discord.ui.button(label="Delete", style=discord.ButtonStyle.red)
+            async def deleteanon(self, interaction, button):
+                await deleteAnonMessage(interaction, anonmessagedata[id]["MessageID"])
+        await interaction.edit_original_response(content=f"Please select an option below for confession {id}.\n-# Since you're the poster of this anonymous message, you can choose to delete it!", view=manageAnonMessageYourself())
+        return
+
+    if isadmin:
+        class manageAnonMessageAdmin(discord.ui.View):
+            @discord.ui.button(label="Report", style=discord.ButtonStyle.red)
+            async def reportanon(self, interaction, button):
+                await reportAnonMessage(interaction, anonmessagedata[id]["Message"], id)
+            @discord.ui.button(label="Ban from anon messages", style=discord.ButtonStyle.red)
+            async def bananon(self, interaction, button): # banananaananananananananananananananaanananananananaananananananananananaan
+                await banAnonUser(interaction, anonmessagedata[id])
+            @discord.ui.button(label="Unban from anon messages", style=discord.ButtonStyle.green)
+            async def unbananon(self, interaction, button):
+                await unbanAnonUser(interaction, anonmessagedata[id])
+        await interaction.edit_original_response(content=f"Please select an option below for confession {id}.\n-# Since you're an admin, you can ban the user who posted the message from posting more anonymous messages!", view=manageAnonMessageAdmin())
+        return
+
+    class manageAnonMessage(discord.ui.View): # one button.
+        @discord.ui.button(label="Report", style=discord.ButtonStyle.red)
+        async def reportanon(self, interaction, button):
+            await reportAnonMessage(interaction, anonmessagedata[id]["Message"], id)
+    await interaction.edit_original_response(content=f"Please select an option below for confession {id}.", view=manageAnonMessage())
+
+# --good noodles--
+# TODO: create goodnoodle code :P
+
+# --katsuprofiles--
+# TODO: create katsuprofiles :P
+
 # --fun--
 @bot.tree.command(name="random-number", description="Picks a random number from 1 to your choice!")
 @app_commands.describe(maxnumber="The maximum number the bot can pick")
@@ -412,17 +593,22 @@ async def randomNumber(interaction: discord.Interaction, maxnumber: int):
 @bot.tree.command(name="change-status", description="Changes the status of the Katsune bot! Only avaliable to etangaming123 and _catulus.")
 @app_commands.describe(state="Playing [state]")
 async def changestatus(interaction: discord.Interaction, state: str):
-    try:
-        await changerpc(state)
-        await interaction.response.send_message(f"Changed status to {state}!!", ephemeral=True)
-    except Exception:
-        print(f"{formatUsername(interaction.user)} executed /change-status and errored, error logs:")
-        traceback.print_exc()
-        await interaction.response.send_message("An error occured while changing bot status. Please report this to etangaming123.", ephemeral=True)
+    if interaction.user.id in powerusers:
+        try:
+            await changerpc(state)
+            await interaction.response.send_message(f"Changed status to {state}!!", ephemeral=True)
+        except Exception:
+            print(f"{formatUsername(interaction.user)} executed /change-status and errored, error logs:")
+            traceback.print_exc()
+            await interaction.response.send_message("An error occured while changing bot status. Please report this to etangaming123.", ephemeral=True)
+        return
+    await interaction.response.send_message("You do not have permission to run this command, sorry!", ephemeral=True)
 
 bot.run(bottoken)
 
-# other information
+# [ other information ]
+# --commenting symbols--
+# protip: use vscode extention "better comments"
 # ! - warning (e.g something doesn't work)
 # ? - concern (e.g "you sure bro?")
 # * - important info (e.g placeholder code)

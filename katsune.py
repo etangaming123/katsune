@@ -1,4 +1,4 @@
-""">> Katsune [version number on alpha release here] <<""" # katsune more like kasane teto or HATSUNE LO
+""">> Katsune Alpha v1.00.00 <<""" # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -278,14 +278,14 @@ async def verifystep1(interaction: discord.Interaction, username: str):
         class ConfirmButtonVerify(discord.ui.View): # literally the verify button
             @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
             async def confirmbuttonverify(self, interaction, button):
-                await interaction.response.send_message(content=f"# >> Katsune Verification <<\n\> Linking your account with {userinfo["Username"]}...", ephemeral=True)
+                await interaction.response.send_message(content=f"# >> Katsune Verification <<\n\> Linking your account with {userinfo['Username']}...", ephemeral=True)
                 if not setDiscordUserID(userinfo["UserID"], interaction.user.id):
-                    await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n\- Linking your account with {userinfo["Username"]}...\n\> Failed to link your account! Please try again.")
+                    await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n\- Linking your account with {userinfo['Username']}...\n\> Failed to link your account! Please try again.")
                     return
-                await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n\- Linking your account with {userinfo["Username"]}...\n\> Successfully linked! Join [this Roblox game](https://www.roblox.com/games/140030248253073/Katsune-Verification-Place) to continue verification, then run /verify-step-2 on Discord to finish verifying!")
+                await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n\- Linking your account with {userinfo['Username']}...\n\> Successfully linked! Join [this Roblox game](https://www.roblox.com/games/140030248253073/Katsune-Verification-Place) to continue verification, then run /verify-step-2 on Discord to finish verifying!")
         thing = getDiscordUserID(userinfo["UserID"])
         if thing == "": # this is good, we want this
-            await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n\-Getting details...\n\- Getting info of {username}...\n\- Details:\n-- UserID: {userinfo["UserID"]}\n-- Username: {userinfo["Username"]}\n-- Displayname: {userinfo["DisplayName"]}\n\> Click the button below if the account is correct.", view=ConfirmButtonVerify())
+            await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n\-Getting details...\n\- Getting info of {username}...\n\- Details:\n-- UserID: {userinfo['UserID']}\n-- Username: {userinfo['Username']}\n-- Displayname: {userinfo['DisplayName']}\n\> Click the button below if the account is correct.", view=ConfirmButtonVerify())
         elif thing == False: # uh no
             await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n\-Getting details...\n\- Getting info of {username}...\n\> Something went wrong while trying to get verification info.")
         else: # already linked

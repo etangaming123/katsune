@@ -1,4 +1,4 @@
-""">> Katsune Alpha v1.00.00 <<""" # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.01 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -13,7 +13,7 @@ import json
 import os
 
 # [ set information ]
-# basically, since i don't want to share the discord bot token and roblox api keys i put them in a separate json
+# basically, since i don't want to share the discord bot token and roblox api keys i put them in a separate json // future etan here, i feel like i should use a .env but im not bothered
 with open("keys.json", "rb") as file: # {"bottoken": "Discord Bot Token", "robloxapikey": "Key to access datastores in a Roblox experience"}
     sensitivedata = json.load(file)
 bottoken = sensitivedata["bottoken"]
@@ -47,8 +47,9 @@ powerusers = [723053854194663456, 627196747676123146] # users with these ids gai
 robloxgameid = 6869030592 # roblox: the game id that has its datastores linked or smth
 gamepassids = [] # gamepass ids for katsune supporter
 emojilist = ["👻", "💸", "💡", "💥", "🍬", "🤖", "🖥️", "🎮", "🔨"] # supports any string
-ghosthuntserverid = 883235310580957234 # the id of the bot's current server
-ghosthuntserver = None # set to none for now, this will be initialised later
+serverid = 883235310580957234 # the id of the bot's current server
+supportergamepassids = [] # enter in the gamepass ids to gain supporter for katsuprofile (the user has to own at least one)
+server = None # set to none for now, this will be initialised later
 
 # --other--
 pfpdisplays = ["Discord", "Roblox", "Custom"] # the pfps that can be displayed on katsuprofiles
@@ -99,6 +100,9 @@ async def sendVerificationSystem(): # sends the verify button in the verificatio
             super().__init__(timeout=None) # no button timeout
         @discord.ui.button(label="Verify", style=discord.ButtonStyle.green)
         async def confirmbuttonverify(self, interaction, button):
+            if verifiedroleid in [role.id for role in interaction.user.roles]: # check if user is already verified
+                await interaction.response.send_message(content="You are already verified!", ephemeral=True)
+                return
             usedemojilist = random.sample(emojilist, 5)
             realemoji = random.sample(usedemojilist, 1)[0]
 
@@ -107,7 +111,7 @@ async def sendVerificationSystem(): # sends the verify button in the verificatio
                     print(f"{formatUsername(interaction.user)} has verified successfully!")
                     await interaction.response.send_message(content="One second, verifying you...", ephemeral=True)
                     try:
-                        role = ghosthuntserver.get_role(verifiedroleid)
+                        role = server.get_role(verifiedroleid)
                         await interaction.user.add_roles(role)
                     except Exception:
                         print(f"{formatUsername(interaction.user)} attempted to verify and errored, error logs:")
@@ -138,6 +142,9 @@ async def sendVerificationSystem(): # sends the verify button in the verificatio
                     await nowayitsabutton(self, interaction, button, 4)
 
             await interaction.response.send_message(content=f"Click the [{realemoji}] to verify!", ephemeral=True, view=TheOtherVerifyButtons())
+    messages = [message async for message in verificationchannel.history(limit=2)]
+    if len(messages) != 0:
+        await messages[0].delete() # delete the old verify message 
     await verificationchannel.send(content="Click the verify button to gain access to the server!", view=ConfirmButtonVerify())
         
 # --roblox--
@@ -231,14 +238,14 @@ def getRobloxDetails(username: str): # gets details of a roblox account
 # [ events ]
 @bot.event
 async def on_ready():
-    global ghosthuntserver
+    global server
     global verificationchannel
     print("Syncing commands...")
     await bot.tree.sync() # this syncs slash commands to server
     print("Changing RPC...")
     await changerpc("Roblox [Ghost Hunt]")
     print("Setting up variables...")
-    ghosthuntserver = await bot.fetch_guild(ghosthuntserverid) # there we go !
+    server = await bot.fetch_guild(serverid) # there we go !
     verificationchannel = bot.get_channel(verificationchannelid)
     print("Sending verification system...")
     await sendVerificationSystem()
@@ -254,10 +261,10 @@ async def on_member_leave(member):
 
 # [ slash commands + others ]
 # --roblox--
-@bot.tree.command(name="verify-step-1", description="Verify your Roblox account with Discord! (Step 1)")
+@bot.tree.command(name="roblox-link-step-1", description="Verify your Roblox account with Discord! (Step 1)")
 @app_commands.describe(username="Your Roblox username")
 async def verifystep1(interaction: discord.Interaction, username: str):
-    print(f"{formatUsername(interaction.user)} executed /verify-step-1")
+    print(f"{formatUsername(interaction.user)} executed /roblox-link-step-1")
     await interaction.response.send_message(content=f"# >> Katsune Verification <<\n\> Getting details...", ephemeral=True)
     try:
         data = loadData("linkedrobloxaccounts")
@@ -282,7 +289,7 @@ async def verifystep1(interaction: discord.Interaction, username: str):
                 if not setDiscordUserID(userinfo["UserID"], interaction.user.id):
                     await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n\- Linking your account with {userinfo['Username']}...\n\> Failed to link your account! Please try again.")
                     return
-                await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n\- Linking your account with {userinfo['Username']}...\n\> Successfully linked! Join [this Roblox game](https://www.roblox.com/games/140030248253073/Katsune-Verification-Place) to continue verification, then run /verify-step-2 on Discord to finish verifying!")
+                await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n\- Linking your account with {userinfo['Username']}...\n\> Successfully linked! Join [this Roblox game](https://www.roblox.com/games/140030248253073/Katsune-Verification-Place) to continue verification, then run /roblox-link-step-2 on Discord to finish verifying!")
         thing = getDiscordUserID(userinfo["UserID"])
         if thing == "": # this is good, we want this
             await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n\-Getting details...\n\- Getting info of {username}...\n\- Details:\n-- UserID: {userinfo['UserID']}\n-- Username: {userinfo['Username']}\n-- Displayname: {userinfo['DisplayName']}\n\> Click the button below if the account is correct.", view=ConfirmButtonVerify())
@@ -291,13 +298,13 @@ async def verifystep1(interaction: discord.Interaction, username: str):
         else: # already linked
             await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n\-Getting details...\n\- Getting info of {username}...\n\> Your Roblox user has already been linked to Discord! To change this, run /unlink-roblox and relink your account.")
     except Exception:
-        print(f"{formatUsername(interaction.user)} executed /verify-step-1 and errored, error logs:")
+        print(f"{formatUsername(interaction.user)} executed /roblox-link-step-1 and errored, error logs:")
         traceback.print_exc()
         await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
 
-@bot.tree.command(name="verify-step-2", description="Verify your Roblox account with Discord! (Step 2)")
+@bot.tree.command(name="roblox-link-step-2", description="Verify your Roblox account with Discord! (Step 2)")
 async def verifystep2(interaction: discord.Interaction):
-    print(f"{formatUsername(interaction.user)} executed /verify-step-2")
+    print(f"{formatUsername(interaction.user)} executed /roblox-link-step-2")
     await interaction.response.send_message(content="# >> Katsune Verification <<\n\> Confirming verification...", ephemeral=True)
     try:
         data = loadData("linkedrobloxaccounts")
@@ -305,7 +312,7 @@ async def verifystep2(interaction: discord.Interaction):
             await interaction.edit_original_response(content="# >> Katsune Verification <<\n\- Confirming verification...\n\> An error occured while loading internal data.")
             return
         if not interaction.user.id in data.keys(): # user has not ran step 1 verification
-            await interaction.edit_original_response(content="# >> Katsune Verification <<\n\- Confirming verification...\n\> Your Roblox user has not been linked! Run /verify-step-1, then rerun this command.")
+            await interaction.edit_original_response(content="# >> Katsune Verification <<\n\- Confirming verification...\n\> Your Roblox user has not been linked! Run /roblox-link-step-1, then rerun this command.")
             return
         if not getVerificationStatus(data[interaction.user.id]): # check if user has joined katsune verification place
             await interaction.edit_original_response(content="# >> Katsune Verification <<\n\- Confirming verification...\n\> An error occured while loading verification data. Have you joined [this Roblox game](https://www.roblox.com/games/140030248253073/Katsune-Verification-Place)?")
@@ -316,7 +323,7 @@ async def verifystep2(interaction: discord.Interaction):
             return
         await interaction.edit_original_response(content="# >> Katsune Verification <<\n\- Confirming verification...\n\> Successfully confirmed verification! Thank you! :3")
     except Exception:
-        print(f"{formatUsername(interaction.user)} executed /verify-step-2 and errored, error logs:")
+        print(f"{formatUsername(interaction.user)} executed /roblox-link-step-2 and errored, error logs:")
         traceback.print_exc()
         await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
 
@@ -349,7 +356,7 @@ async def getConversationStarter(interaction: discord.Interaction):
         if data == "":
             await interaction.edit_original_response(content="# >> Conversation Starters <<\n\- Getting random conversation starter...\> An error occured while reading internal data.")
             return
-        number = random(0, len(data) - 1) # pick random
+        number = random.randint(0, len(data) - 1) # pick random
         await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n\- Getting random conversation starter...\n\> \"{data[str(number)]}\" (ID: {str(number)})")
     except Exception:
         print(f"{formatUsername(interaction.user)} executed /conversation-starter and errored, error logs:")
@@ -449,10 +456,10 @@ class AnonForm(discord.ui.Modal, title='Anonymous Message Form'): # this isn't a
     )
 
     async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.send_message(f'Saving data and posting to channel...', ephemeral=True)
+        await interaction.response.send_message(f'\> Saving data and posting to channel...', ephemeral=True)
         anonmessages = loadData("anonymousmessages")
         if anonmessages == "":
-            await interaction.edit_original_response(content="Failed to load anonymous message data! Please report this error to @etangaming123.")
+            await interaction.edit_original_response(content="\- Saving data and posting to channel...\n\> Failed to load anonymous message data! Please report this error to @etangaming123.")
         try:
             anonchannel = await bot.fetch_channel(anonchannelid)
             internalanonid = len(anonmessages) + 1
@@ -470,13 +477,13 @@ class AnonForm(discord.ui.Modal, title='Anonymous Message Form'): # this isn't a
                 anonmessages[internalanonid]["MessageID"] = message.id
                 saveData("anonymousmessages", anonmessages)
             else:
-                await interaction.edit_original_response(content="Failed to save anonymous message data! Please report this error to @etangaming123.")
+                await interaction.edit_original_response(content="\- Saving data and posting to channel...\n\> Failed to save anonymous message data! Please report this error to @etangaming123.")
         except Exception:
             traceback.print_exc()
-            await interaction.edit_original_response(content="An unaccounted error occured! Please report this error to @etangaming123.")
+            await interaction.edit_original_response(content="\- Saving data and posting to channel...\n\> An unaccounted error occured! Please report this error to @etangaming123.")
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
-        await interaction.response.send_message('Something went wrong whist trying to submit your anonymous message. Please report this error to @etangaming123.', ephemeral=True)
+        await interaction.response.send_message('\- Saving data and posting to channel...\n\> Something went wrong whist trying to submit your anonymous message. Please report this error to @etangaming123.', ephemeral=True)
         traceback.print_exception(type(error), error, error.__traceback__)
 
 @bot.tree.command(name="send-anon", description="Sends an anonymous message!")
@@ -497,13 +504,13 @@ async def sendanonymousmessage(interaction: discord.Interaction):
 @bot.tree.command(name="manage-anon", description="Can be used to report an anonymous message, or deleting if it's your message.")
 @app_commands.describe(id="The ID of the anonymous message to manage.")
 async def manageanonymousmessage(interaction: discord.Interaction, id: int):
-    await interaction.response.send_message("One second, getting anon message data...", ephemeral=True)
+    await interaction.response.send_message("# >> Anon Messaging <<\n\> One second, getting anon message data...", ephemeral=True)
     anonmessagedata = loadData("anonymousmessages")
     if anonmessagedata == "":
-        await interaction.edit_original_response(content="Failed to load anon message data! Please report this error to @etangaming123.")
+        await interaction.edit_original_response(content="# >> Anon Messaging <<\n\- One second, getting anon message data...\n\> Failed to load anon message data! Please report this error to @etangaming123.")
         return
     if not id in anonmessagedata.keys():
-        await interaction.edit_original_response(content="That anonymous message does not exist!")
+        await interaction.edit_original_response(content="# >> Anon Messaging <<\n\- One second, getting anon message data...\n\> That anonymous message does not exist!")
         return
     isyourself = anonmessagedata[id]["UserID"] == interaction.user.id # if the user running the command is the same person as the poster of the message idk 
     isadmin = False
@@ -555,7 +562,7 @@ async def manageanonymousmessage(interaction: discord.Interaction, id: int):
             @discord.ui.button(label="Delete", style=discord.ButtonStyle.red)
             async def deleteanon(self, interaction, button):
                 await deleteAnonMessage(interaction, anonmessagedata[id]["MessageID"])
-        await interaction.edit_original_response(content=f"Please select an option below for confession {id}.\n-# Since you're the poster of this anonymous message, you can choose to delete it!", view=manageAnonMessageYourself())
+        await interaction.edit_original_response(content=f"# >> Anon Messaging <<\n\- One second, getting anon message data...\n\> Please select an option below for confession {id}.\n-# Since you're the poster of this anonymous message, you can choose to delete it!", view=manageAnonMessageYourself())
         return
 
     if isadmin:
@@ -569,14 +576,14 @@ async def manageanonymousmessage(interaction: discord.Interaction, id: int):
             @discord.ui.button(label="Unban from anon messages", style=discord.ButtonStyle.green)
             async def unbananon(self, interaction, button):
                 await unbanAnonUser(interaction, anonmessagedata[id])
-        await interaction.edit_original_response(content=f"Please select an option below for confession {id}.\n-# Since you're an admin, you can ban the user who posted the message from posting more anonymous messages!", view=manageAnonMessageAdmin())
+        await interaction.edit_original_response(content=f"# >> Anon Messaging <<\n\- One second, getting anon message data...\n\> Please select an option below for confession {id}.\n-# Since you're an admin, you can ban the user who posted the message from posting more anonymous messages!", view=manageAnonMessageAdmin())
         return
 
     class manageAnonMessage(discord.ui.View): # one button.
         @discord.ui.button(label="Report", style=discord.ButtonStyle.red)
         async def reportanon(self, interaction, button):
             await reportAnonMessage(interaction, anonmessagedata[id]["Message"], id)
-    await interaction.edit_original_response(content=f"Please select an option below for confession {id}.", view=manageAnonMessage())
+    await interaction.edit_original_response(content=f"# >> Anon Messaging <<\n\- One second, getting anon message data...\n\> Please select an option below for confession {id}.", view=manageAnonMessage())
 
 # --good noodles--
 # TODO: create goodnoodle code :P
@@ -594,9 +601,10 @@ async def randomNumber(interaction: discord.Interaction, maxnumber: int):
 @app_commands.describe(state="Playing [state]")
 async def changestatus(interaction: discord.Interaction, state: str):
     if interaction.user.id in powerusers:
+        print(f"{formatUsername(interaction.user)} executed /change-status")
         try:
             await changerpc(state)
-            await interaction.response.send_message(f"Changed status to {state}!!", ephemeral=True)
+            await interaction.response.send_message(f"Changed status to {state}", ephemeral=True)
         except Exception:
             print(f"{formatUsername(interaction.user)} executed /change-status and errored, error logs:")
             traceback.print_exc()
@@ -604,7 +612,7 @@ async def changestatus(interaction: discord.Interaction, state: str):
         return
     await interaction.response.send_message("You do not have permission to run this command, sorry!", ephemeral=True)
 
-bot.run(bottoken)
+bot.run(bottoken) # run.
 
 # [ other information ]
 # --commenting symbols--

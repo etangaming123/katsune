@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.01 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.02 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -356,7 +356,7 @@ async def getConversationStarter(interaction: discord.Interaction):
         if data == "":
             await interaction.edit_original_response(content="# >> Conversation Starters <<\n\- Getting random conversation starter...\> An error occured while reading internal data.")
             return
-        number = random.randint(0, len(data) - 1) # pick random
+        number = random.randint(1, len(data) - 1) # pick random
         await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n\- Getting random conversation starter...\n\> \"{data[str(number)]}\" (ID: {str(number)})")
     except Exception:
         print(f"{formatUsername(interaction.user)} executed /conversation-starter and errored, error logs:")
@@ -374,7 +374,7 @@ async def addConversationStarter(interaction: discord.Interaction, conversation_
     if not haspermissions:
         await interaction.response.send_message(content="# >> Conversation Starters <<\n\> You do not have permission to use this command!", ephemeral=True)
         return
-    class ConfirmButtonConversationStarter(discord.ui.view):
+    class ConfirmButtonConversationStarter(discord.ui.View):
         @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
         async def confirmbuttonconversationstarter(self, interaction, button):
             await interaction.response.send_message(content=f"# >> Conversation Starters <<\n\> Adding conversation starter \"{conversation_starter}\"...", ephemeral=True)

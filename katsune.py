@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.02 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.12 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -42,6 +42,7 @@ verificationchannelid = 1129962618346553450 # channel to send verification confi
 anonchannelid = 1128811704726339614 # channel to send anonymous messages
 katsunelogid = 1233388519075086366 # channel to send anonymous message reports, etc
 verifiedroleid = 1129960240922759218 # the verified role's id
+goodnoodleroleid = 1107836361920217118 # the good noodle role's id
 adminroleids = [883261775510921256, 883261098059522078] # users with these role ids gain specific permisions
 powerusers = [723053854194663456, 627196747676123146] # users with these ids gain even more perms, but do not have the same perms as the above
 robloxgameid = 6869030592 # roblox: the game id that has its datastores linked or smth
@@ -586,7 +587,88 @@ async def manageanonymousmessage(interaction: discord.Interaction, id: int):
     await interaction.edit_original_response(content=f"# >> Anon Messaging <<\n\- One second, getting anon message data...\n\> Please select an option below for confession {id}.", view=manageAnonMessage())
 
 # --good noodles--
-# TODO: create goodnoodle code :P
+@bot.tree.command(name="my-good-noodles", description="See how many good noodles you have!")
+async def getGoodNoodles(interaction: discord.Interaction):
+    await interaction.response.send_message("# >> Good Noodles <<\n\> Getting good noodle data...", ephemeral=True)
+    goodnoodledata = loadData("goodnoodles")
+    if goodnoodledata == "":
+        await interaction.edit_original_response(content="# >> Good Noodles <<\n\- Getting good noodle data...\n\> Failed to load good noodle data!")
+        return
+    if not interaction.user.id in goodnoodledata.keys():
+        goodnoodledata[interaction.user.id] = 0
+        saveData("goodnoodles", goodnoodledata)
+    await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- Getting good noodle data...\n\> You have {goodnoodledata[interaction.user.id]} good noodles!")
+
+@bot.tree.command(name="view-good-noodles", description="See how many good noodles a user has!")
+@app_commands.describe(user="The user to view good noodles of")
+async def viewGoodNoodles(interaction: discord.Interaction, user: discord.User):
+    await interaction.response.send_message("# >> Good Noodles <<\n\> Getting good noodle data...", ephemeral=True)
+    goodnoodledata = loadData("goodnoodles")
+    if goodnoodledata == "":
+        await interaction.edit_original_response(content="# >> Good Noodles <<\n\- Getting good noodle data...\n\> Failed to load good noodle data!")
+        return
+    if not user.id in goodnoodledata.keys():
+        goodnoodledata[user.id] = 0
+        saveData("goodnoodles", goodnoodledata)
+    await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- Getting good noodle data...\n\> {formatUsername(user)} has {goodnoodledata[user.id]} good noodles!")
+
+@bot.tree.command(name="good-noodle-leaderboard", description="Shows the good noodle leaderboard!")
+async def goodNoodleLeaderboard(interaction: discord.Interaction):
+    await interaction.response.send_message("# >> Good Noodles <<\n\> One second, getting good noodles...", ephemeral=True)
+    try:
+        goodNoodleData = loadData("goodnoodles")
+        if goodNoodleData == "":
+            await interaction.edit_original_response(content="# >> Good Noodles <<\n\- One second, getting good noodles...\n\> Failed to load good noodle data!") 
+        sorteddata = dict(sorted(goodNoodleData.items(), key=lambda item: item[1], reverse=True)[:10])
+        leaderboard = ""
+        for item in sorteddata.keys():
+            try:
+                user = formatUsername(bot.get_user(item))
+            except Exception:
+                user = f"Unknown User (ID {item})"
+            leaderboard += f"\n\> {user} - {str(sorteddata[item])} good noodles"
+        await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- One second, getting good noodles...\n\> Good noodle leaderboard:\n{leaderboard}")
+    except Exception:
+        print(f"{formatUsername(interaction.user)} executed /good-noodle-leaderboard and errored, error logs:")
+        traceback.print_exc()
+        await interaction.edit_original_response(content="# >> Good Noodles <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
+
+@bot.tree.command(name="add-good-noodle", description="[ONLY AVALIABLE TO CATULUS] Adds good noodles to a user!")
+@app_commands.describe(user="The user to add good noodles to", amount="The amount of good noodles to add (can be negative to subtract)")
+async def addGoodNoodle(interaction: discord.Interaction, user: discord.User, amount: int):
+    if not interaction.user.id in powerusers:
+        await interaction.response.send_message(content="# >> Good Noodles <<\n\> You do not have permission to use this command!", ephemeral=True)
+        return
+    gaverole = "Nah"
+    await interaction.response.send_message(f"# >> Good Noodles <<\n\> Adding {str(amount)} good noodles to {formatUsername(user)}...", ephemeral=True)
+    try:
+        goodnoodledata = loadData("goodnoodles")
+        if goodnoodledata == "":
+            await interaction.edit_original_response(content="# >> Good Noodles <<\n\- Adding good noodles...\n\> Failed to load good noodle data!")
+            return
+        if not user.id in goodnoodledata.keys():
+            goodnoodledata[user.id] = 0
+        goodnoodledata[user.id] += amount
+        if goodnoodledata[user.id] < 0: # if the amount is negative, set it to 0
+            goodnoodledata[user.id] = 0
+        if goodnoodledata[user.id] > 0: # if the amount is more than 0, give user good noodle role
+            try:
+                role = server.get_role(goodnoodleroleid)
+                await user.add_roles(role)
+                gaverole = "Yeah"
+            except Exception:
+                gaverole = "Errored"
+        if saveData("goodnoodles", goodnoodledata):
+            if gaverole == "Errored":
+                await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- Adding good noodles...\n\> Added {str(amount)} good noodles to {formatUsername(user)}, they now have {goodnoodledata[user.id]} good noodles!\n\> Failed to give user good noodle role, please do it manually.")
+                return
+            await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- Adding good noodles...\n\> Added {str(amount)} good noodles to {formatUsername(user)}, they now have {goodnoodledata[user.id]} good noodles!!")
+        else:
+            await interaction.edit_original_response(content="# >> Good Noodles <<\n\- Adding good noodles...\n\> Failed to save good noodle data!")
+    except Exception:
+        print(f"{formatUsername(interaction.user)} executed /add-good-noodle and errored, error logs:")
+        traceback.print_exc()
+        await interaction.edit_original_response(content=f"# >> Good Noodles <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
 
 # --katsuprofiles--
 # TODO: create katsuprofiles :P

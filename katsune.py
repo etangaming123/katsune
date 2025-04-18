@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.12 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.13 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -30,7 +30,7 @@ for item in datastores:
 
 # [ variables ]
 # --data--
-defaultkatsuprofile = {"AboutMe": "", "DisplayRoblox": False, "DisplaySupporter": False, "DisplayGoodNoodles": False, "Pfp": "Discord", "DisplayName": "DiscordDisplay", "Name": "DiscordUser"}
+defaultkatsuprofile = {"AboutMe": "", "DisplayRoblox": False, "DisplaySupporter": False, "DisplayGoodNoodles": False, "Pfp": "Discord", "CustomPFPUrl": "", "DisplayName": "DiscordDisplay", "Name": "DiscordUser"}
 
 # --discord--
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
@@ -597,7 +597,7 @@ async def getGoodNoodles(interaction: discord.Interaction):
     if not interaction.user.id in goodnoodledata.keys():
         goodnoodledata[interaction.user.id] = 0
         saveData("goodnoodles", goodnoodledata)
-    await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- Getting good noodle data...\n\> You have {goodnoodledata[interaction.user.id]} good noodles!")
+    await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- Getting good noodle data...\n\> You have {goodnoodledata[interaction.user.id]} good noodles ⭐!")
 
 @bot.tree.command(name="view-good-noodles", description="See how many good noodles a user has!")
 @app_commands.describe(user="The user to view good noodles of")
@@ -610,9 +610,9 @@ async def viewGoodNoodles(interaction: discord.Interaction, user: discord.User):
     if not user.id in goodnoodledata.keys():
         goodnoodledata[user.id] = 0
         saveData("goodnoodles", goodnoodledata)
-    await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- Getting good noodle data...\n\> {formatUsername(user)} has {goodnoodledata[user.id]} good noodles!")
+    await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- Getting good noodle data...\n\> {formatUsername(user)} has {goodnoodledata[user.id]} good noodles ⭐!")
 
-@bot.tree.command(name="good-noodle-leaderboard", description="Shows the good noodle leaderboard!")
+@bot.tree.command(name="good-noodle-leaderboard", description="Shows the good noodle leaderboard! (top 10 users)")
 async def goodNoodleLeaderboard(interaction: discord.Interaction):
     await interaction.response.send_message("# >> Good Noodles <<\n\> One second, getting good noodles...", ephemeral=True)
     try:
@@ -626,7 +626,7 @@ async def goodNoodleLeaderboard(interaction: discord.Interaction):
                 user = formatUsername(bot.get_user(item))
             except Exception:
                 user = f"Unknown User (ID {item})"
-            leaderboard += f"\n\> {user} - {str(sorteddata[item])} good noodles"
+            leaderboard += f"\n\> {user} - {str(sorteddata[item])} ⭐"
         await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- One second, getting good noodles...\n\> Good noodle leaderboard:\n{leaderboard}")
     except Exception:
         print(f"{formatUsername(interaction.user)} executed /good-noodle-leaderboard and errored, error logs:")
@@ -660,9 +660,12 @@ async def addGoodNoodle(interaction: discord.Interaction, user: discord.User, am
                 gaverole = "Errored"
         if saveData("goodnoodles", goodnoodledata):
             if gaverole == "Errored":
-                await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- Adding good noodles...\n\> Added {str(amount)} good noodles to {formatUsername(user)}, they now have {goodnoodledata[user.id]} good noodles!\n\> Failed to give user good noodle role, please do it manually.")
+                await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- Adding good noodles...\n\> Added {str(amount)} good noodles to {formatUsername(user)}, they now have {goodnoodledata[user.id]} ⭐!\n\> Failed to give user good noodle role, please do it manually.")
                 return
-            await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- Adding good noodles...\n\> Added {str(amount)} good noodles to {formatUsername(user)}, they now have {goodnoodledata[user.id]} good noodles!!")
+            if gaverole == "Yeah":
+                await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- Adding good noodles...\n\> Added {str(amount)} good noodles to {formatUsername(user)}, they now have {goodnoodledata[user.id]} ⭐!\n\> Gave user good noodle role!")
+                return
+            await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- Adding good noodles...\n\> Added {str(amount)} good noodles to {formatUsername(user)}, they now have {goodnoodledata[user.id]} ⭐!")
         else:
             await interaction.edit_original_response(content="# >> Good Noodles <<\n\- Adding good noodles...\n\> Failed to save good noodle data!")
     except Exception:
@@ -691,6 +694,21 @@ async def changestatus(interaction: discord.Interaction, state: str):
             print(f"{formatUsername(interaction.user)} executed /change-status and errored, error logs:")
             traceback.print_exc()
             await interaction.response.send_message("An error occured while changing bot status. Please report this to etangaming123.", ephemeral=True)
+        return
+    await interaction.response.send_message("You do not have permission to run this command, sorry!", ephemeral=True)
+
+@bot.tree.command(name="say", description="Make the bot say something!")
+@app_commands.describe(message="The message to say")
+async def say(interaction: discord.Interaction, message: str):
+    if interaction.user.id in powerusers:
+        print(f"{formatUsername(interaction.user)} executed /say")
+        try:
+            await interaction.channel.send(message)
+            await interaction.response.send_message("Sent!", ephemeral=True)
+        except Exception:
+            print(f"{formatUsername(interaction.user)} executed /say and errored, error logs:")
+            traceback.print_exc()
+            await interaction.response.send_message("An error occured while making the bot say something. Please report this to etangaming123.", ephemeral=True)
         return
     await interaction.response.send_message("You do not have permission to run this command, sorry!", ephemeral=True)
 

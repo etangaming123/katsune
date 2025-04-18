@@ -9,12 +9,28 @@ This bot's source code is **open source**, so free feel to use this for your own
 
 ## Roblox Integration
 
-To verify your Roblox account with Discord, run /roblox-link-step-1. You will need to enter your username.
+To link your Roblox account with Discord, run /roblox-link-step-1. You will need to enter your username.
+
+After that, join the "experience" (game) that the bot has sent after running /roblox-link-step-1, and follow the instructions from there. After completing those instructions, run /roblox-link-step-2 and you're done! Your Roblox account has been linked with Discord.
 
 ## Katsuprofiles
 
 > [!NOTE]
 > Katsuprofiles has not yet been added as of writing this.
+
+Katsuprofiles are "mini-profiles" for each user!
+
+Viewing a profile using /view-profile [user] will show their Katsuprofiles.
+
+Katsuprofiles can be modified to show either a Roblox or Discord username/displayname, a profile picture, and a custom "about me" section!
+
+Katsuprofiles also come with a "supporter" tag, which can be brought if a user has at least one of the specified gamepasses. These gamepasses can be modified by adding them to the following list:
+
+```python
+gamepassids = [] # gamepass ids for katsune supporter
+```
+
+Supporters have more features, such as setting a custom pfp, having a yellow embed background, and a star next to their user/displayname!
 
 ## Your own usage
 

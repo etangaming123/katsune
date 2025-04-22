@@ -32,6 +32,20 @@ gamepassids = [] # gamepass ids for katsune supporter
 
 Supporters have more features, such as setting a custom pfp, having a yellow embed background, and a star next to their user/displayname!
 
+## Other commands
+
+### Good Noodles
+
+[haha spunch bob refence](https://www.youtube.com/watch?v=RqkwI-ucNc4)
+
+Good noodles is like a rewards system that owners of servers can use to give out "good noodles" to their server members!
+
+(and yes, there is a leaderboard.)
+
+### /catwoman
+
+![a screenshot](./docs/thatonescreenshot.png)
+
 ## Your own usage
 
 Katsune is free to use in your own Discord server if you wish to!
@@ -68,7 +82,7 @@ Save your API key somewhere safe, you'll also need that for local setup.
 > [!WARNING]
 > Katsune was not programmed for other usages other than the Ghost Hunt Discord server. Use this script on your own server at your own risk!
 
-Install the [required libraries](requirements.txt "requirements.txt file for pip"), set up the variables in [katsune.py](katsune.py "The Python script used to host the bot, what else?") so that they match your preferred settings:
+Install the [required libraries](requirements.txt "requirements.txt file for pip"), and set up the variables in [katsune.py](katsune.py "The Python script used to host the bot, what else?") so that they match your preferred settings:
 
 ```python
 memberjoinleavechannelid = 1125568412882583552 # channel id to say when a user leaves or joins

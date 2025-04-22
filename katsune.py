@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.13 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.23 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -235,6 +235,30 @@ def getRobloxDetails(username: str): # gets details of a roblox account
     except Exception:
         traceback.print_exc()
         return "Error"
+
+def getRobloxDetailsByID(id: int):
+    try:
+        url = f'https://users.roblox.com/v1/users/{id}'
+        response = requests.get(url)
+        if response.status_code != 200:
+            return "Error"
+        if response.status_code == 404:
+            return "NonExistant"
+        data = response.json()
+        return {"UserID": data["id"], "Username": data["name"], "DisplayName": data["displayName"]}
+    except Exception:
+        traceback.print_exc()
+        return "Error"
+
+def getUserOwnsGamepasses(userid):
+    for item in gamepassids:
+        url = f"https://inventory.roblox.com/v1/users/{userid}/items/GamePass/{item}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            if data != []:
+                return True
+    return False
 
 # [ events ]
 @bot.event
@@ -674,7 +698,311 @@ async def addGoodNoodle(interaction: discord.Interaction, user: discord.User, am
         await interaction.edit_original_response(content=f"# >> Good Noodles <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
 
 # --katsuprofiles--
-# TODO: create katsuprofiles :P
+@bot.tree.command(name="view-katsuprofile", description="View a KatsuProfile!")
+@app_commands.describe(user="The user to view the profile of")
+async def viewkatsuprofile(interaction: discord.Interaction, user: discord.User):
+    await interaction.response.send_message("# >> KatsuProfiles <<\n\> Getting profile data...", ephemeral=True)
+    try:
+        data = loadData("katsuprofiles")
+        if data == "":
+            await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\- Getting profile data...\n\> Failed to load profile data!")
+            return
+        if not user.id in data.keys():
+            data[user.id] = defaultkatsuprofile
+            saveData("katsuprofiles", data)
+        robloxdata = loadData("linkedrobloxaccounts")
+        if robloxdata == "":
+            await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\- Getting profile data...\n\> Failed to load linked Roblox accounts data!")
+            return
+        if user.id in robloxdata.keys():
+            if robloxdata[user.id]["Verified"] == True:
+                robloxuserid = robloxdata[user.id]["RobloxID"]
+                supporter = robloxdata[user.id]["Supporter"]
+            else:
+                supporter = False
+                robloxuserid = None
+        else:
+            supporter = False
+            robloxuserid = None
+        
+        profile = data[user.id]
+        embed = discord.Embed(title=f"{formatUsername(user)}'s KatsuProfile", color=discord.Color.greyple())
+        if supporter and profile["DisplaySupporter"]:
+            embed = discord.Embed(title=f"⭐ {formatUsername(user)}'s KatsuProfile", color=discord.Color.yellow()) # woah supporter
+            embed.set_footer(text="This user is a KatsuSupporter!")
+
+        if profile["Name"] == "DiscordDisplay":
+            if user.global_name is None:
+                embed.add_field(name="Username", value=user.name)
+            else:
+                embed.add_field(name="Username", value=user.global_name)
+        elif profile["Name"] == "DiscordUser":
+            embed.add_field(name="Username", value=f"@{user.name}")
+        elif profile["Name"] == "RobloxDisplay":
+            robloxuser = getRobloxDetailsByID(robloxuserid)
+            if robloxuser != "Error" and robloxuser != "NonExistant":
+                embed.add_field(name="Username", value=robloxuser["DisplayName"])
+        elif profile["Name"] == "RobloxUser":
+            robloxuser = getRobloxDetailsByID(robloxuserid)
+            if robloxuser != "Error" and robloxuser != "NonExistant":
+                embed.add_field(name="Username", value=f"@{robloxuser['Username']}")
+
+        if profile["DisplayName"] == "DiscordDisplay":
+            if user.global_name is None:
+                embed.add_field(name="Display name", value=user.name)
+            else:
+                embed.add_field(name="Display name", value=user.global_name)
+        elif profile["DisplayName"] == "DiscordUser":
+            embed.add_field(name="Display name", value=f"@{user.name}")
+        elif profile["DisplayName"] == "RobloxDisplay":
+            robloxuser = getRobloxDetailsByID(robloxuserid)
+            if robloxuser != "Error" and robloxuser != "NonExistant":
+                embed.add_field(name="Display name", value=robloxuser["DisplayName"])
+        elif profile["DisplayName"] == "RobloxUser":
+            robloxuser = getRobloxDetailsByID(robloxuserid)
+            if robloxuser != "Error" and robloxuser != "NonExistant":
+                embed.add_field(name="Display name", value=f"@{robloxuser['Username']}")
+
+        if profile["Pfp"] == "Discord":
+            embed.set_image(url=user.avatar.url)
+        elif profile["Pfp"] == "Roblox":
+            embed.set_image(url=f"https://www.roblox.com/headshot-thumbnail/image?userId={robloxuserid}&width=420&height=420&format=Png&name=AvatarHeadshot")
+        elif profile["Pfp"] == "Custom":
+            embed.set_image(url=profile["CustomPfp"])
+        
+        if profile["AboutMe"] != "":
+            embed.add_field(name="About me", value=profile["AboutMe"], inline=False)
+
+        if profile["DisplayRoblox"] and robloxuserid is not None:
+            robloxuser = getRobloxDetailsByID(robloxuserid)
+            if robloxuser != "Error" and robloxuser != "NonExistant":
+                embed.add_field(name="Roblox Info", value=f"{robloxuser['DisplayName']} (@{robloxuser['Username']})")
+
+        goodnoodles = loadData("goodnoodles")
+        if goodnoodles != "" and user.id in goodnoodles.keys() and profile["DisplayGoodNoodles"]:
+            embed.add_field(name="Good Noodles", value=f"{goodnoodles[user.id]} ⭐", inline=False)
+
+        await interaction.edit_original_response(embed=embed)
+    except Exception:
+        print(f"{formatUsername(interaction.user)} executed /view-katsuprofile and errored, error logs:")
+        traceback.print_exc()
+        await interaction.edit_original_response(content=f"# >> Katsune Profiles <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
+
+@bot.tree.command(name="check-supporter", description="Gives you the supporter role if you have a gamepass from Ghost Hunt!")
+async def checkSupporter(interaction: discord.Interaction):
+    await interaction.response.send_message("# >> Katsuprofiles <<\n\> Getting Roblox linked accounts...", ephemeral=True)
+    robloxdata = loadData("linkedrobloxaccounts")
+    if robloxdata == "":
+        await interaction.edit_original_response(content="# >> Katsuprofiles <<\n\- Getting Roblox linked accounts...\n\> Failed to get Roblox linked accounts! Please report this error to @etangaming123.")
+        return
+    if not interaction.user.id in robloxdata.keys():
+        await interaction.edit_original_response(content="# >> Katsuprofiles <<\n\- Getting Roblox linked accounts...\n\> You have not linked your Roblox account with Discord! Please run /roblox-link-step-1.")
+        return
+    if robloxdata[interaction.user.id]["Verified"] == False:
+        await interaction.edit_original_response(content="# >> Katsuprofiles <<\n\- Getting Roblox linked accounts...\n\> You have not linked your Roblox account with Discord! Please run /roblox-link-step-2.")
+        return
+    if robloxdata[interaction.user.id]["Supporter"] == True:
+        await interaction.edit_original_response(content="# >> Katsuprofiles <<\n\- Getting Roblox linked accounts...\n\> You're already a supporter!")
+        return
+    await interaction.edit_original_response(content="# >> Katsuprofiles <<\n\- Getting Roblox linked accounts...\n\> Checking your gamepasses... (this might take a while)")
+    if getUserOwnsGamepasses(robloxdata[interaction.user.id]["RobloxID"]):
+        robloxdata[interaction.user.id]["Supporter"] = True
+        if saveData("linkedrobloxaccounts", robloxdata):
+            await interaction.edit_original_response(content="# >> Katsuprofiles <<\n\- Getting Roblox linked accounts...\n\- Checking your gamepasses... (this might take a while)\n\> You are now a supporter! Thank you! :3")
+        else:
+            await interaction.edit_original_response(content="# >> Katsuprofiles <<\n\- Getting Roblox linked accounts...\n\- Checking your gamepasses... (this might take a while)\n\> Something went wrong while trying to save data. Please report this to etangaming123.")
+    else:
+        await interaction.edit_original_response(content="# >> Katsuprofiles <<\n\- Getting Roblox linked accounts...\n\- Checking your gamepasses... (this might take a while)\n\> You do not have a gamepass from [Ghost Hunt](https://www.roblox.com/games/45387032/)! If this is wrong, please report this to etangaming123.")
+
+@bot.tree.command(name="supporter", description="Check out KatsuSupporter and what it does!")
+async def supporter(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title="KatsuSupporter",
+        description="KatsuSupporter is a way to support the development of Katsune and Ghost Hunt! By purchasing a supporter gamepass in Ghost Hunt, you gain access to exclusive features and perks.",
+        color=discord.Color.gold()
+    )
+    embed.add_field(name="Perks", value="\> ⭐ Special badge on your KatsuProfile\n\> 🎨 Extra customisation options on your KatsuProfile\n\> 🎮 Exclusive events for Supporters", inline=False)
+    embed.add_field(name="How to Become a Supporter", value="Purchase any gamepass in [Ghost Hunt](https://www.roblox.com/games/45387032/). After purchasing, run `/check-supporter` to activate your perks!", inline=False)
+    embed.set_footer(text="Thank you for supporting Katsune and Ghost Hunt! :3")
+    await interaction.response.send_message(embed=embed)
+
+class EditKatsuprofileModal(discord.ui.Modal, title="Edit Your Katsuprofile"):
+    about_me = discord.ui.TextInput(
+        label="About Me",
+        style=discord.TextStyle.long,
+        placeholder="Update your 'About Me' section.",
+        required=False,
+        max_length=200
+    )
+
+    user_name = discord.ui.TextInput(
+        label="Username Type",
+        placeholder="Choose from: DiscordDisplay, DiscordUser, RobloxDisplay, RobloxUser.",
+        required=False
+    )
+
+    display_name = discord.ui.TextInput(
+        label="Display Name Type",
+        placeholder="Choose from: DiscordDisplay, DiscordUser, RobloxDisplay, RobloxUser.",
+        required=False
+    )
+    pfp = discord.ui.TextInput(
+        label="Profile Picture Type",
+        placeholder="Choose from: Discord, Roblox, Custom.",
+        required=False
+    )
+    custom_pfp = discord.ui.TextInput(
+        label="Custom Profile Picture URL (Supporters only)",
+        placeholder="Provide a custom profile picture URL.",
+        required=False
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.send_message("# >> KatsuProfiles <<\n\> Updating your profile...", ephemeral=True)
+        try:
+            data = loadData("katsuprofiles")
+            if data == "":
+                await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\- Updating your profile...\n\> Failed to load profile data!")
+                return
+
+            if interaction.user.id not in data.keys():
+                data[interaction.user.id] = defaultkatsuprofile
+
+            profile = data[interaction.user.id]
+
+            robloxdata = loadData("linkedrobloxaccounts")
+            if robloxdata == "":
+                await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\- Updating your profile...\n\> Failed to load linked Roblox accounts data!")
+                return
+
+            if self.about_me.value:
+                profile["AboutMe"] = self.about_me.value
+
+            if self.display_name.value:
+                if self.display_name.value in namedisplays:
+                    if "Roblox" in self.display_name.value and (interaction.user.id not in robloxdata.keys() or not robloxdata[interaction.user.id]["Verified"]):
+                        await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\- Updating your profile...\n\> You must link and verify your Roblox account to use Roblox-related display name types!")
+                        return
+                    profile["DisplayName"] = self.display_name.value
+                else:
+                    await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\- Updating your profile...\n\> Invalid display name type! Please choose from: DiscordDisplay, DiscordUser, RobloxDisplay, RobloxUser.")
+                    return
+
+            if self.user_name.value:
+                if self.user_name.value in namedisplays:
+                    if "Roblox" in self.user_name.value and (interaction.user.id not in robloxdata.keys() or not robloxdata[interaction.user.id]["Verified"]):
+                        await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\- Updating your profile...\n\> You must link and verify your Roblox account to use Roblox-related display name types!")
+                        return
+                    profile["Name"] = self.user_name.value
+                else:
+                    await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\- Updating your profile...\n\> Invalid display name type! Please choose from: DiscordDisplay, DiscordUser, RobloxDisplay, RobloxUser.")
+                    return
+
+            if self.pfp.value:
+                if self.pfp.value in pfpdisplays:
+                    if "Roblox" in self.pfp.value and (interaction.user.id not in robloxdata.keys() or not robloxdata[interaction.user.id]["Verified"]):
+                        await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\- Updating your profile...\n\> You must link and verify your Roblox account to use Roblox-related profile picture types!")
+                        return
+                    profile["Pfp"] = self.pfp.value
+                else:
+                    await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\- Updating your profile...\n\> Invalid profile picture type! Please choose from: Discord, Roblox, Custom.")
+                    return
+
+            if self.custom_pfp.value:
+                if robloxdata == "" or interaction.user.id not in robloxdata.keys() or not robloxdata[interaction.user.id]["Supporter"]:
+                    await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\- Updating your profile...\n\> Custom profile pictures are only available for supporters!")
+                    return
+                profile["CustomPfp"] = self.custom_pfp.value
+                profile["Pfp"] = "Custom"
+
+            data[interaction.user.id] = profile
+
+            if saveData("katsuprofiles", data):
+                await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\- Updating your profile...\n\> Profile updated successfully!")
+            else:
+                await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\- Updating your profile...\n\> Failed to save profile data!")
+        except Exception:
+            print(f"{formatUsername(interaction.user)} submitted EditKatsuprofileModal and errored, error logs:")
+            traceback.print_exc()
+            await interaction.edit_original_response(content=f"# >> KatsuProfiles <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
+
+@bot.tree.command(name="edit-katsuprofile", description="Edit your Katsuprofile!")
+async def edit_katsuprofile(interaction: discord.Interaction):
+    await interaction.response.send_modal(EditKatsuprofileModal())
+
+@bot.tree.command(name="configure-katsuprofile", description="Change options related to your KatsuProfile!")
+async def configure_katsuprofile(interaction: discord.Interaction):
+    await interaction.response.send_message("# >> KatsuProfiles <<\n\> Loading your profile settings...", ephemeral=True)
+    try:
+        data = loadData("katsuprofiles")
+        if data == "":
+            await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\- Loading your profile settings...\n\> Failed to load profile data!")
+            return
+
+        if interaction.user.id not in data.keys():
+            data[interaction.user.id] = defaultkatsuprofile
+            saveData("katsuprofiles", data)
+
+        profile = data[interaction.user.id]
+
+        class ConfigureKatsuProfileView(discord.ui.View):
+            @discord.ui.button(label="Toggle Display Good Noodles", style=discord.ButtonStyle.blurple)
+            async def toggle_good_noodles(self, interaction: discord.Interaction, button: discord.ui.Button):
+                profile["DisplayGoodNoodles"] = not profile["DisplayGoodNoodles"]
+                if saveData("katsuprofiles", data):
+                    await interaction.response.send_message(f"Display Good Noodles set to {profile['DisplayGoodNoodles']}.", ephemeral=True)
+                else:
+                    await interaction.response.send_message("Failed to save profile data. Please try again.", ephemeral=True)
+
+            @discord.ui.button(label="Toggle Display Supporter", style=discord.ButtonStyle.blurple)
+            async def toggle_supporter(self, interaction: discord.Interaction, button: discord.ui.Button):
+                profile["DisplaySupporter"] = not profile["DisplaySupporter"]
+                if saveData("katsuprofiles", data):
+                    await interaction.response.send_message(f"Display Supporter set to {profile['DisplaySupporter']}.", ephemeral=True)
+                else:
+                    await interaction.response.send_message("Failed to save profile data. Please try again.", ephemeral=True)
+
+            @discord.ui.button(label="Toggle Display Roblox", style=discord.ButtonStyle.blurple)
+            async def toggle_display_roblox(self, interaction: discord.Interaction, button: discord.ui.Button):
+                profile["DisplayRoblox"] = not profile["DisplayRoblox"]
+                if saveData("katsuprofiles", data):
+                    await interaction.response.send_message(f"Display Roblox set to {profile['DisplayRoblox']}.", ephemeral=True)
+                else:
+                    await interaction.response.send_message("Failed to save profile data. Please try again.", ephemeral=True)
+
+        await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\> Use the buttons below to configure your profile settings.", view=ConfigureKatsuProfileView())
+    except Exception:
+        print(f"{formatUsername(interaction.user)} executed /configure-katsuprofile and errored, error logs:")
+        traceback.print_exc()
+        await interaction.edit_original_response(content=f"# >> KatsuProfiles <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
+
+@bot.tree.command(name="delete-katsuprofile", description="Delete your KatsuProfile!")
+async def delete_katsuprofile(interaction: discord.Interaction):
+    await interaction.response.send_message("# >> KatsuProfiles <<\n\> Are you sure you want to delete your KatsuProfile? This action cannot be undone.", ephemeral=True)
+
+    class ConfirmDeleteKatsuProfile(discord.ui.View):
+        @discord.ui.button(label="Confirm", style=discord.ButtonStyle.red)
+        async def confirm_delete(self, interaction: discord.Interaction, button: discord.ui.Button):
+            try:
+                data = loadData("katsuprofiles")
+                if data == "":
+                    await interaction.response.send_message("# >> KatsuProfiles <<\n\> Failed to load profile data!", ephemeral=True)
+                    return
+
+                if interaction.user.id in data.keys():
+                    del data[interaction.user.id]
+                    if saveData("katsuprofiles", data):
+                        await interaction.response.send_message("# >> KatsuProfiles <<\n\> Your KatsuProfile has been deleted successfully.", ephemeral=True)
+                    else:
+                        await interaction.response.send_message("# >> KatsuProfiles <<\n\> Failed to save profile data after deletion!", ephemeral=True)
+                else:
+                    await interaction.response.send_message("# >> KatsuProfiles <<\n\> You do not have a KatsuProfile to delete.", ephemeral=True)
+            except Exception:
+                print(f"{formatUsername(interaction.user)} executed /delete-katsuprofile and errored, error logs:")
+                traceback.print_exc()
+                await interaction.response.send_message("# >> KatsuProfiles <<\n[ FATAL ERROR OCCURED ]\nAn unexpected error occurred. Please report this to etangaming123.", ephemeral=True)
+
+    await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\> Are you sure you want to delete your KatsuProfile? This action cannot be undone.", view=ConfirmDeleteKatsuProfile())
 
 # --fun--
 @bot.tree.command(name="random-number", description="Picks a random number from 1 to your choice!")
@@ -696,6 +1024,14 @@ async def changestatus(interaction: discord.Interaction, state: str):
             await interaction.response.send_message("An error occured while changing bot status. Please report this to etangaming123.", ephemeral=True)
         return
     await interaction.response.send_message("You do not have permission to run this command, sorry!", ephemeral=True)
+
+@bot.tree.command(name="catwoman", description="@Antimatternova") # context: antimatternova requested this command as a joke to troll catulus next livestream
+async def catwoman(interaction: discord.Interaction):
+    randomurls = ["https://cdn.discordapp.com/attachments/1363647904706990213/1363648005227675838/artworks-5sj56rNx0PpjXmnZ-ZTA3DA-t1080x1080.png?ex=6806cbab&is=68057a2b&hm=1a3ddd830e15e171c73d0dc1c12cf3f626a4c0c077b06de44cef81341fbceb1d&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363648090195759134/Catwoman_Infobox.png?ex=6806cbc0&is=68057a40&hm=f72a0c30a7008ddf29e2066e0c8198bc992d6c426d7e621dcd684495fd6e777e&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363648311130587267/Batman_Catwoman_Cv1_5f5a90d860f7f3.png?ex=6806cbf4&is=68057a74&hm=8ac79dbd4a88faeb716271586a78868614498da539bdb6f03e2c8abd7ebebb61&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363649026116944022/Batman-One-Bad-Day-Catwoman-Main-Cover-e1674486774532.png?ex=6806cc9f&is=68057b1f&hm=0eeab3bbb60a005c099aaa035a3f654afe26ecc677a696cd1747a9e5db8ff2e3&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363649064314343516/Catwoman-Batman.png?ex=6806cca8&is=68057b28&hm=09a50a20700b45d6c67ba77da0f63707f168f8d80ea264be7b8224a8d40133c7&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363649173093617846/GalleryComics_1900x900_20140423_CTW_Cv30_5e990721567896.png?ex=6806ccc2&is=68057b42&hm=bb39ea4df9f718bb8533934ffdc14b782541e093ebaa104aedf9acfc59dc4a71&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363649378304135198/images.png?ex=6806ccf3&is=68057b73&hm=be08f61221cc1a3a577c4cf20d92fe5889db24a4fb294b3241c9b7adb791f157&"]
+    if random.randint(0, 1000) == 1000:
+        await interaction.response.send_message("This has a 1 in 1000 chance of appearing. There's supposed to be an image of catulus in cat ears, but I'm not bothered to photoshop that :P")
+        return
+    await interaction.response.send_message(randomurls[random.randint(0, len(randomurls) - 1)])
 
 @bot.tree.command(name="say", description="Make the bot say something!")
 @app_commands.describe(message="The message to say")

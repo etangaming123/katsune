@@ -15,8 +15,8 @@ After that, join the "experience" (game) that the bot has sent after running /ro
 
 ## Katsuprofiles
 
-> [!NOTE]
-> Katsuprofiles has not yet been added as of writing this.
+> [!IMPORTANT]
+> Katsuprofiles are in early stages of development, use at your own risk!
 
 Katsuprofiles are "mini-profiles" for each user!
 

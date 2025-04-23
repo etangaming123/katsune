@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.23 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.24 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -49,7 +49,7 @@ robloxgameid = 6869030592 # roblox: the game id that has its datastores linked o
 gamepassids = [] # gamepass ids for katsune supporter
 emojilist = ["👻", "💸", "💡", "💥", "🍬", "🤖", "🖥️", "🎮", "🔨"] # supports any string
 serverid = 883235310580957234 # the id of the bot's current server
-supportergamepassids = [] # enter in the gamepass ids to gain supporter for katsuprofile (the user has to own at least one)
+supportergamepassids = [68822, 361065, 618024, 622162, 636742, 637007, 1056036590, 10136141, 10136132, 10136106, 10136059, 3656940] # enter in the gamepass ids to gain supporter for katsuprofile (the user has to own at least one)
 server = None # set to none for now, this will be initialised later
 
 # --other--
@@ -59,21 +59,22 @@ namedisplays = ["DiscordDisplay", "DiscordUser", "RobloxDisplay", "RobloxUser"] 
 # [ functions ]
 # --internal--
 def saveData(store: str, newdata: dict): # Saves data to a specified .pkl file
-    print(f"Saving [{store}]...")
+    print(f"Saving {store}.pkl...")
     try:
         with open(f"{store}.pkl", "wb") as file:
             pickle.dump(newdata, file)
             return True # Return true if it succeeds
     except Exception:
+        print(f"Failed to save {store}.pkl!")
         traceback.print_exc()
         return False # Otherwise return false
 
 def loadData(store: str): # Gets data from a specified .pkl file
-    print(f"Loading [{store}]...")
     try:
         with open(f"{store}.pkl", "rb") as file:
             return pickle.load(file) # Return file data if it succeeds
     except Exception:
+        print(f"Failed to load {store}.pkl!")
         traceback.print_exc()
         return "" # Otherwise return an empty string
 
@@ -236,6 +237,20 @@ def getRobloxDetails(username: str): # gets details of a roblox account
         traceback.print_exc()
         return "Error"
 
+def getUserOwnsGamepasses(userid):
+    global supportergamepassids
+    for item in supportergamepassids:
+        try:
+            url = f"https://inventory.roblox.com/v1/users/{userid}/items/GamePass/{item}"
+            response = requests.get(url)
+            if response.status_code == 200:
+                data = response.json()
+                if data["data"] != []:
+                    return True
+        except Exception as e:
+            print(f"Scanning {userid}'s gamepasses failed - {e}")
+    return False
+
 def getRobloxDetailsByID(id: int):
     try:
         url = f'https://users.roblox.com/v1/users/{id}'
@@ -249,16 +264,6 @@ def getRobloxDetailsByID(id: int):
     except Exception:
         traceback.print_exc()
         return "Error"
-
-def getUserOwnsGamepasses(userid):
-    for item in gamepassids:
-        url = f"https://inventory.roblox.com/v1/users/{userid}/items/GamePass/{item}"
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            if data != []:
-                return True
-    return False
 
 # [ events ]
 @bot.event
@@ -698,7 +703,7 @@ async def addGoodNoodle(interaction: discord.Interaction, user: discord.User, am
         await interaction.edit_original_response(content=f"# >> Good Noodles <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
 
 # --katsuprofiles--
-@bot.tree.command(name="view-katsuprofile", description="View a KatsuProfile!")
+@bot.tree.command(name="view-katsuprofile", description="View a Katsune profile!")
 @app_commands.describe(user="The user to view the profile of")
 async def viewkatsuprofile(interaction: discord.Interaction, user: discord.User):
     await interaction.response.send_message("# >> KatsuProfiles <<\n\> Getting profile data...", ephemeral=True)

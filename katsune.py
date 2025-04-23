@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.24 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.25 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -11,6 +11,7 @@ import traceback
 import requests
 import json
 import os
+import aiohttp
 
 # [ set information ]
 # basically, since i don't want to share the discord bot token and roblox api keys i put them in a separate json // future etan here, i feel like i should use a .env but im not bothered
@@ -150,7 +151,7 @@ async def sendVerificationSystem(): # sends the verify button in the verificatio
     await verificationchannel.send(content="Click the verify button to gain access to the server!", view=ConfirmButtonVerify())
         
 # --roblox--
-def getDiscordUserID(robloxid): # gets the discord user id that is linked to a roblox account
+def getDiscordUserID(robloxid: int): # gets the discord user id that is linked to a roblox account
     print(f"Getting Discord ID from Roblox ID [{robloxid}]...")
     url = f"https://apis.roblox.com/cloud/v2/universes/{robloxgameid}/data-stores/DiscordDatastore/entries?id={robloxid}"
     headers = {"x-api-key": robloxapikey}
@@ -165,7 +166,7 @@ def getDiscordUserID(robloxid): # gets the discord user id that is linked to a r
         print(f"Failed to get Discord ID for Roblox id {robloxid} // {response.json()}")
         return False # return false if something fails
 
-def setDiscordUserID(robloxid, discordid): # sets the discord user id for a roblox account
+def setDiscordUserID(robloxid: int, discordid: int): # sets the discord user id for a roblox account
     print(f"Setting Roblox ID {robloxid} to Discord ID {discordid}")
     url = f"https://apis.roblox.com/cloud/v2/universes/{robloxgameid}/data-stores/DiscordDatastore/entries?id={robloxid}"
     headers = {"x-api-key": robloxapikey}
@@ -183,7 +184,7 @@ def setDiscordUserID(robloxid, discordid): # sets the discord user id for a robl
         print(f"Failed to link Roblox {robloxid} with {discordid} // {response.json()}")
         return False
 
-def getVerificationStatus(robloxid): # checks if user has entered katsune verification place and hit "verify"
+def getVerificationStatus(robloxid: int): # checks if user has entered katsune verification place and hit "verify"
     print(f"Getting verification status for {robloxid}")
     url = f"https://apis.roblox.com/cloud/v2/universes/{robloxgameid}/data-stores/IsVerifiedDatastore/entries?id={robloxid}"
     headers = {"x-api-key": robloxapikey}
@@ -194,7 +195,7 @@ def getVerificationStatus(robloxid): # checks if user has entered katsune verifi
         print(f"Failed to get verification status for {robloxid} // {response.json()}")
         return False
 
-def unlinkUser(discordid, robloxid): # self explanatory (also returns true if succeeds, false if fails)
+def unlinkUser(discordid: int, robloxid: int): # self explanatory (also returns true if succeeds, false if fails)
     print(f"Unlinking Roblox ID {robloxid} and Discord ID {discordid}")
     url = f"https://apis.roblox.com/cloud/v2/universes/{robloxgameid}/data-stores/DiscordDatastore/entries/{robloxid}"
     url2 = f"https://apis.roblox.com/cloud/v2/universes/{robloxgameid}/data-stores/IsVerifiedDatastore/entries/{robloxid}"
@@ -237,18 +238,19 @@ def getRobloxDetails(username: str): # gets details of a roblox account
         traceback.print_exc()
         return "Error"
 
-def getUserOwnsGamepasses(userid):
+async def getUserOwnsGamepasses(userid: int):
     global supportergamepassids
-    for item in supportergamepassids:
-        try:
-            url = f"https://inventory.roblox.com/v1/users/{userid}/items/GamePass/{item}"
-            response = requests.get(url)
-            if response.status_code == 200:
-                data = response.json()
-                if data["data"] != []:
-                    return True
-        except Exception as e:
-            print(f"Scanning {userid}'s gamepasses failed - {e}")
+    async with aiohttp.ClientSession() as session:
+        for item in supportergamepassids:
+            try:
+                url = f"https://inventory.roblox.com/v1/users/{userid}/items/GamePass/{item}" # https://devforum.roblox.com/t/how-to-see-if-a-user-owns-a-gamepass-using-the-roblox-api/926581
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        if data["data"] != []:
+                            return True
+            except Exception as e:
+                print(f"Scanning {userid}'s gamepasses failed - {e}")
     return False
 
 def getRobloxDetailsByID(id: int):
@@ -550,7 +552,7 @@ async def manageanonymousmessage(interaction: discord.Interaction, id: int):
                 isadmin = True
                 break
     
-    async def reportAnonMessage(interaction, message, id):
+    async def reportAnonMessage(interaction, message, id): # literally just sends a message to whatever channel i have set it to 
         loggingchannel = await bot.fetch_channel(katsunelogid)
         reportEmbed = discord.Embed(title=f"Report by {formatUsername(interaction.user)}", description=f"The user has reported an anonymous message with the following content:\n\n\"{message}\"")
         reportEmbed.set_footer(text=f"The image for this anon message, if any, was removed. If this report is genuine, run /manage-anon {id} and either delete the message or ban the user from making anonymous messages.")
@@ -562,7 +564,7 @@ async def manageanonymousmessage(interaction: discord.Interaction, id: int):
         if bannedusers == "":
             await interaction.response.send_message("Failed to load banned anons! Please try again.", ephemeral=True)
             return
-        bannedusers[anondata["UserID"]] = interaction.user.id # {userthatwasbanned: userthatbannedtheuserthatwasbanned}
+        bannedusers[anondata["UserID"]] = interaction.user.id # {userthatwasbanned: userthatbannedtheuserthatwasbanned} <-- bro etan this is the WORST way you could've handled this
         if saveData("bannedanons", bannedusers):
             await interaction.response.send_message("Banned anon user sucessfully!", ephemeral=True)
             return
@@ -641,20 +643,20 @@ async def viewGoodNoodles(interaction: discord.Interaction, user: discord.User):
         saveData("goodnoodles", goodnoodledata)
     await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- Getting good noodle data...\n\> {formatUsername(user)} has {goodnoodledata[user.id]} good noodles ⭐!")
 
-@bot.tree.command(name="good-noodle-leaderboard", description="Shows the good noodle leaderboard! (top 10 users)")
+@bot.tree.command(name="good-noodle-leaderboard", description="Shows the good noodle leaderboard! (top 15 users)")
 async def goodNoodleLeaderboard(interaction: discord.Interaction):
     await interaction.response.send_message("# >> Good Noodles <<\n\> One second, getting good noodles...", ephemeral=True)
     try:
         goodNoodleData = loadData("goodnoodles")
         if goodNoodleData == "":
             await interaction.edit_original_response(content="# >> Good Noodles <<\n\- One second, getting good noodles...\n\> Failed to load good noodle data!") 
-        sorteddata = dict(sorted(goodNoodleData.items(), key=lambda item: item[1], reverse=True)[:10])
+        sorteddata = dict(sorted(goodNoodleData.items(), key=lambda item: item[1], reverse=True)[:min(15, len(goodNoodleData))])
         leaderboard = ""
         for item in sorteddata.keys():
             try:
                 user = formatUsername(bot.get_user(item))
             except Exception:
-                user = f"Unknown User (ID {item})"
+                user = f"Unknown User (ID {item})" # probably when the user has left the server
             leaderboard += f"\n\> {user} - {str(sorteddata[item])} ⭐"
         await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- One second, getting good noodles...\n\> Good noodle leaderboard:\n{leaderboard}")
     except Exception:
@@ -668,7 +670,8 @@ async def addGoodNoodle(interaction: discord.Interaction, user: discord.User, am
     if not interaction.user.id in powerusers:
         await interaction.response.send_message(content="# >> Good Noodles <<\n\> You do not have permission to use this command!", ephemeral=True)
         return
-    gaverole = "Nah"
+    gaverole = "Nah" # basically checks if the bot successfully gives the good noodle role to the user
+    print(f"{formatUsername(interaction.user)} added {str(amount)} good noodles to {formatUsername(user)}!")
     await interaction.response.send_message(f"# >> Good Noodles <<\n\> Adding {str(amount)} good noodles to {formatUsername(user)}...", ephemeral=True)
     try:
         goodnoodledata = loadData("goodnoodles")
@@ -706,6 +709,7 @@ async def addGoodNoodle(interaction: discord.Interaction, user: discord.User, am
 @bot.tree.command(name="view-katsuprofile", description="View a Katsune profile!")
 @app_commands.describe(user="The user to view the profile of")
 async def viewkatsuprofile(interaction: discord.Interaction, user: discord.User):
+    print(f"{formatUsername(interaction.user)} ran /view-katsuprofile on {formatUsername(user)}")
     await interaction.response.send_message("# >> KatsuProfiles <<\n\> Getting profile data...", ephemeral=True)
     try:
         data = loadData("katsuprofiles")
@@ -722,7 +726,7 @@ async def viewkatsuprofile(interaction: discord.Interaction, user: discord.User)
         if user.id in robloxdata.keys():
             if robloxdata[user.id]["Verified"] == True:
                 robloxuserid = robloxdata[user.id]["RobloxID"]
-                supporter = robloxdata[user.id]["Supporter"]
+                supporter = robloxdata[user.id]["Supporter"] # supporter status is in roblox linked accounts
             else:
                 supporter = False
                 robloxuserid = None
@@ -731,10 +735,10 @@ async def viewkatsuprofile(interaction: discord.Interaction, user: discord.User)
             robloxuserid = None
         
         profile = data[user.id]
-        embed = discord.Embed(title=f"{formatUsername(user)}'s KatsuProfile", color=discord.Color.greyple())
+        embed = discord.Embed(title=f"{formatUsername(user)}'s KatsuProfile", color=discord.Color.greyple()) # what kinda name is greyple i just realised
         if supporter and profile["DisplaySupporter"]:
             embed = discord.Embed(title=f"⭐ {formatUsername(user)}'s KatsuProfile", color=discord.Color.yellow()) # woah supporter
-            embed.set_footer(text="This user is a KatsuSupporter!")
+            embed.set_footer(text="This user is a KatsuSupporter! Run /supporter to learn more!")
 
         if profile["Name"] == "DiscordDisplay":
             if user.global_name is None:
@@ -779,22 +783,28 @@ async def viewkatsuprofile(interaction: discord.Interaction, user: discord.User)
             embed.add_field(name="About me", value=profile["AboutMe"], inline=False)
 
         if profile["DisplayRoblox"] and robloxuserid is not None:
+            await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\- Getting profile data...\n\> Getting Roblox info...")
             robloxuser = getRobloxDetailsByID(robloxuserid)
             if robloxuser != "Error" and robloxuser != "NonExistant":
                 embed.add_field(name="Roblox Info", value=f"{robloxuser['DisplayName']} (@{robloxuser['Username']})")
 
-        goodnoodles = loadData("goodnoodles")
-        if goodnoodles != "" and user.id in goodnoodles.keys() and profile["DisplayGoodNoodles"]:
-            embed.add_field(name="Good Noodles", value=f"{goodnoodles[user.id]} ⭐", inline=False)
+        if profile["DisplayGoodNoodles"]:
+            goodnoodles = loadData("goodnoodles")
+            if goodnoodles == "":
+                embed.add_field(name="Good Noodles", value=f"[Good noodles failed to load, report to etangaming123]", inline=False)
+            else:
+                if user.id in goodnoodles.keys():
+                    embed.add_field(name="Good Noodles", value=f"{goodnoodles[user.id]} ⭐", inline=False)
 
         await interaction.edit_original_response(embed=embed)
     except Exception:
-        print(f"{formatUsername(interaction.user)} executed /view-katsuprofile and errored, error logs:")
+        print(f"{formatUsername(interaction.user)} executed /view-katsuprofile on {formatUsername(user)} and errored, error logs:")
         traceback.print_exc()
         await interaction.edit_original_response(content=f"# >> Katsune Profiles <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
 
 @bot.tree.command(name="check-supporter", description="Gives you the supporter role if you have a gamepass from Ghost Hunt!")
 async def checkSupporter(interaction: discord.Interaction):
+    print(f"{formatUsername(interaction.user)} ran /check-supporter")
     await interaction.response.send_message("# >> Katsuprofiles <<\n\> Getting Roblox linked accounts...", ephemeral=True)
     robloxdata = loadData("linkedrobloxaccounts")
     if robloxdata == "":
@@ -811,6 +821,7 @@ async def checkSupporter(interaction: discord.Interaction):
         return
     await interaction.edit_original_response(content="# >> Katsuprofiles <<\n\- Getting Roblox linked accounts...\n\> Checking your gamepasses... (this might take a while)")
     if getUserOwnsGamepasses(robloxdata[interaction.user.id]["RobloxID"]):
+        print(f"{formatUsername(interaction.user)} is now a supporter!")
         robloxdata[interaction.user.id]["Supporter"] = True
         if saveData("linkedrobloxaccounts", robloxdata):
             await interaction.edit_original_response(content="# >> Katsuprofiles <<\n\- Getting Roblox linked accounts...\n\- Checking your gamepasses... (this might take a while)\n\> You are now a supporter! Thank you! :3")
@@ -931,12 +942,14 @@ class EditKatsuprofileModal(discord.ui.Modal, title="Edit Your Katsuprofile"):
             traceback.print_exc()
             await interaction.edit_original_response(content=f"# >> KatsuProfiles <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
 
-@bot.tree.command(name="edit-katsuprofile", description="Edit your Katsuprofile!")
+@bot.tree.command(name="edit-katsuprofile", description="Edit your KatsuProfile!")
 async def edit_katsuprofile(interaction: discord.Interaction):
+    print(f"{formatUsername(interaction.user)} ran /edit-katsuprofile")
     await interaction.response.send_modal(EditKatsuprofileModal())
 
 @bot.tree.command(name="configure-katsuprofile", description="Change options related to your KatsuProfile!")
 async def configure_katsuprofile(interaction: discord.Interaction):
+    print(f"{formatUsername(interaction.user)} ran /configure-katsuprofile")
     await interaction.response.send_message("# >> KatsuProfiles <<\n\> Loading your profile settings...", ephemeral=True)
     try:
         data = loadData("katsuprofiles")
@@ -983,8 +996,8 @@ async def configure_katsuprofile(interaction: discord.Interaction):
 
 @bot.tree.command(name="delete-katsuprofile", description="Delete your KatsuProfile!")
 async def delete_katsuprofile(interaction: discord.Interaction):
+    print(f"{formatUsername(interaction.user)} ran /delete-katsuprofile")
     await interaction.response.send_message("# >> KatsuProfiles <<\n\> Are you sure you want to delete your KatsuProfile? This action cannot be undone.", ephemeral=True)
-
     class ConfirmDeleteKatsuProfile(discord.ui.View):
         @discord.ui.button(label="Confirm", style=discord.ButtonStyle.red)
         async def confirm_delete(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -1032,7 +1045,7 @@ async def changestatus(interaction: discord.Interaction, state: str):
 
 @bot.tree.command(name="catwoman", description="@Antimatternova") # context: antimatternova requested this command as a joke to troll catulus next livestream
 async def catwoman(interaction: discord.Interaction):
-    randomurls = ["https://cdn.discordapp.com/attachments/1363647904706990213/1363648005227675838/artworks-5sj56rNx0PpjXmnZ-ZTA3DA-t1080x1080.png?ex=6806cbab&is=68057a2b&hm=1a3ddd830e15e171c73d0dc1c12cf3f626a4c0c077b06de44cef81341fbceb1d&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363648090195759134/Catwoman_Infobox.png?ex=6806cbc0&is=68057a40&hm=f72a0c30a7008ddf29e2066e0c8198bc992d6c426d7e621dcd684495fd6e777e&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363648311130587267/Batman_Catwoman_Cv1_5f5a90d860f7f3.png?ex=6806cbf4&is=68057a74&hm=8ac79dbd4a88faeb716271586a78868614498da539bdb6f03e2c8abd7ebebb61&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363649026116944022/Batman-One-Bad-Day-Catwoman-Main-Cover-e1674486774532.png?ex=6806cc9f&is=68057b1f&hm=0eeab3bbb60a005c099aaa035a3f654afe26ecc677a696cd1747a9e5db8ff2e3&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363649064314343516/Catwoman-Batman.png?ex=6806cca8&is=68057b28&hm=09a50a20700b45d6c67ba77da0f63707f168f8d80ea264be7b8224a8d40133c7&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363649173093617846/GalleryComics_1900x900_20140423_CTW_Cv30_5e990721567896.png?ex=6806ccc2&is=68057b42&hm=bb39ea4df9f718bb8533934ffdc14b782541e093ebaa104aedf9acfc59dc4a71&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363649378304135198/images.png?ex=6806ccf3&is=68057b73&hm=be08f61221cc1a3a577c4cf20d92fe5889db24a4fb294b3241c9b7adb791f157&"]
+    randomurls = ["https://cdn.discordapp.com/attachments/1363647904706990213/1363648005227675838/artworks-5sj56rNx0PpjXmnZ-ZTA3DA-t1080x1080.png?ex=6806cbab&is=68057a2b&hm=1a3ddd830e15e171c73d0dc1c12cf3f626a4c0c077b06de44cef81341fbceb1d&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363648090195759134/Catwoman_Infobox.png?ex=6806cbc0&is=68057a40&hm=f72a0c30a7008ddf29e2066e0c8198bc992d6c426d7e621dcd684495fd6e777e&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363648311130587267/Batman_Catwoman_Cv1_5f5a90d860f7f3.png?ex=6806cbf4&is=68057a74&hm=8ac79dbd4a88faeb716271586a78868614498da539bdb6f03e2c8abd7ebebb61&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363649026116944022/Batman-One-Bad-Day-Catwoman-Main-Cover-e1674486774532.png?ex=6806cc9f&is=68057b1f&hm=0eeab3bbb60a005c099aaa035a3f654afe26ecc677a696cd1747a9e5db8ff2e3&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363649064314343516/Catwoman-Batman.png?ex=6806cca8&is=68057b28&hm=09a50a20700b45d6c67ba77da0f63707f168f8d80ea264be7b8224a8d40133c7&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363649173093617846/GalleryComics_1900x900_20140423_CTW_Cv30_5e990721567896.png?ex=6806ccc2&is=68057b42&hm=bb39ea4df9f718bb8533934ffdc14b782541e093ebaa104aedf9acfc59dc4a71&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363649378304135198/images.png?ex=6806ccf3&is=68057b73&hm=be08f61221cc1a3a577c4cf20d92fe5889db24a4fb294b3241c9b7adb791f157&"] # boo :3
     if random.randint(0, 1000) == 1000:
         await interaction.response.send_message("This has a 1 in 1000 chance of appearing. There's supposed to be an image of catulus in cat ears, but I'm not bothered to photoshop that :P")
         return

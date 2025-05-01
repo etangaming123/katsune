@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.25 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.26 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -775,7 +775,19 @@ async def viewkatsuprofile(interaction: discord.Interaction, user: discord.User)
         if profile["Pfp"] == "Discord":
             embed.set_image(url=user.avatar.url)
         elif profile["Pfp"] == "Roblox":
-            embed.set_image(url=f"https://www.roblox.com/headshot-thumbnail/image?userId={robloxuserid}&width=420&height=420&format=Png&name=AvatarHeadshot")
+            try:
+                url = f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={robloxuserid}&size=420x420&format=Png&isCircular=false"
+                response = requests.get(url)
+                if response.status_code == 200:
+                    data = response.json()
+                    imageurl = data['data'][0]['imageUrl']
+                    embed.set_image(url=imageurl)
+                else:
+                    print("Failed to fetch image from Roblox API")
+            except Exception:
+                print(f"{formatUsername(interaction.user)} executed /view-katsuprofile on {formatUsername(user)} and loading Roblox pfp failed, error logs:")
+                traceback.print_exc()
+
         elif profile["Pfp"] == "Custom":
             embed.set_image(url=profile["CustomPfp"])
         

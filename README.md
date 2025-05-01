@@ -13,24 +13,31 @@ To link your Roblox account with Discord, run /roblox-link-step-1. You will need
 
 After that, join the "experience" (game) that the bot has sent after running /roblox-link-step-1, and follow the instructions from there. After completing those instructions, run /roblox-link-step-2 and you're done! Your Roblox account has been linked with Discord.
 
-## Katsuprofiles
+## KatsuProfiles
 
 > [!IMPORTANT]
-> Katsuprofiles are in early stages of development, use at your own risk!
+> KatsuProfiles are in early stages of development, use at your own risk!
 
-Katsuprofiles are "mini-profiles" for each user!
+> [!TIP]
+> It's recommended to link your Roblox user with Katsune if you wish to use KatsuProfiles.
+
+KatsuProfiles are "mini-profiles" for each user!
 
 Viewing a profile using /view-profile [user] will show their Katsuprofiles.
 
-Katsuprofiles can be modified to show either a Roblox or Discord username/displayname, a profile picture, and a custom "about me" section!
+KatsuProfiles can be modified to show either a Roblox or Discord username/displayname, a profile picture, and a custom "about me" section using the /edit-katsuprofile and /configure-katsuprofile, as well as your Roblox information and the amount of good noodles you have.
 
-Katsuprofiles also come with a "supporter" tag, which can be brought if a user has at least one of the specified gamepasses. These gamepasses can be modified by adding them to the following list:
+KatsuProfiles also come with a "supporter" tag, which can be brought if a user has at least one of the specified gamepasses. These gamepasses can be modified by adding them to the following list within the script:
 
 ```python
 gamepassids = [] # gamepass ids for katsune supporter
 ```
 
 Supporters have more features, such as setting a custom pfp, having a yellow embed background, and a star next to their user/displayname!
+
+Here's an example of a Katsuprofile:
+
+![my katsuprofile in ghost hunt's server](./docs/katsuprofile.png)
 
 ## Other commands
 
@@ -48,7 +55,10 @@ Good noodles is like a rewards system that owners of servers can use to give out
 
 ## Your own usage
 
-Katsune is free to use in your own Discord server if you wish to!
+[!WARNING]
+Katsune was not programmed for other Discord servers. Use this script on your own server at your own risk!
+
+Katsune is free to use in your own Discord server if you wish to! Please note, issues that occur during your own usage cannot be reported as bugs. 
 
 > [!TIP]
 > Test your Discord bot before sending invites!
@@ -78,9 +88,6 @@ Save your API key somewhere safe, you'll also need that for local setup.
 ### Local Setup
 
 (what you have to do on the device running katsune.py)
-
-> [!WARNING]
-> Katsune was not programmed for other usages other than the Ghost Hunt Discord server. Use this script on your own server at your own risk!
 
 Install the [required libraries](requirements.txt "requirements.txt file for pip"), and set up the variables in [katsune.py](katsune.py "The Python script used to host the bot, what else?") so that they match your preferred settings:
 
@@ -112,6 +119,14 @@ Create a new file named keys.json in the same directory as katsune.py:
 Once you've setup the variables, run katsune.py! It will automatically create the data files (.pkl).
 
 And now you have Katsune in your own server!
+
+## Contributing
+
+You can report issues with Katsune [here](https://github.com/etangaming123/katsune/issues/new). Please note that issues can only be created if you find a bug in the official Katsune bot (in the Ghost Hunt server.)
+
+You can also create a new [pull request](https://github.com/etangaming123/katsune/pulls) if there's code that can be improved.
+
+Please note that I may not be able to respond to your issue or pull request immediately. Pull requests cannot be new features, please post that as a suggestion in the Ghost Hunt server.
 
 ## Licensing
 

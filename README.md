@@ -53,12 +53,16 @@ Good noodles is like a rewards system that owners of servers can use to give out
 
 ![a screenshot](./docs/thatonescreenshot.png)
 
+### /ship
+
+shipping is literally a random number generator and should not be taken seriously.
+
 ## Your own usage
 
 > [!WARNING]
 > Katsune was not programmed for other Discord servers. Use this script on your own server at your own risk!
 
-Katsune is free to use in your own Discord server if you wish to! Please note, issues that occur during your own usage cannot be reported as bugs. 
+Katsune is free to use in your own Discord server if you wish to! Please note, issues that occur during your own usage cannot be reported as bugs.
 
 > [!TIP]
 > Test your Discord bot before sending invites!

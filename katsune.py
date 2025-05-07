@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.26 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.27 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -564,7 +564,7 @@ async def manageanonymousmessage(interaction: discord.Interaction, id: int):
         if bannedusers == "":
             await interaction.response.send_message("Failed to load banned anons! Please try again.", ephemeral=True)
             return
-        bannedusers[anondata["UserID"]] = interaction.user.id # {userthatwasbanned: userthatbannedtheuserthatwasbanned} <-- bro etan this is the WORST way you could've handled this
+        bannedusers[anondata["UserID"]] = interaction.user.id # {userthatwasbanned: userthatbannedtheuserthatwasbanned} <-- bro etan this is the WORST way you could've handled this <-- wait no this is actually kinda smart cuz it logs whoever banned that user so if you go into the pkl file then uh yeah
         if saveData("bannedanons", bannedusers):
             await interaction.response.send_message("Banned anon user sucessfully!", ephemeral=True)
             return
@@ -1033,6 +1033,89 @@ async def delete_katsuprofile(interaction: discord.Interaction):
                 await interaction.response.send_message("# >> KatsuProfiles <<\n[ FATAL ERROR OCCURED ]\nAn unexpected error occurred. Please report this to etangaming123.", ephemeral=True)
 
     await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\> Are you sure you want to delete your KatsuProfile? This action cannot be undone.", view=ConfirmDeleteKatsuProfile())
+
+# --shipping--
+def saveShip(userid1, userid2, newvalue):
+    with open("ships.pkl", "rb") as file:
+        data = pickle.load(file)
+    selectedindex = ""
+    for index in data.keys():
+        if index == f"{userid1},{userid2}":
+            selectedindex = index
+            break
+        if index == f"{userid2},{userid1}":
+            selectedindex = index
+            break
+    if selectedindex == "":
+        data[f"{userid1},{userid2}"] = newvalue
+    else:
+        data[selectedindex] = newvalue
+    with open("ships.pkl", "wb") as file:
+        pickle.dump(data, file)
+
+def getShip(userid1, userid2):
+    with open("ships.pkl", "rb") as file:
+        data = pickle.load(file)
+    selectedindex = ""
+    for index in data.keys():
+        if index == f"{userid1},{userid2}":
+            selectedindex = index
+            break
+        if index == f"{userid2},{userid1}":
+            selectedindex = index
+            break
+    if selectedindex == "":
+        oohshipvalue = random.randint(0, 100)
+        data[f"{userid1},{userid2}"] = oohshipvalue
+        saveShip(userid1, userid2, oohshipvalue)
+        return data[f"{userid1},{userid2}"]
+    else:
+        return data[selectedindex]
+    
+textvalues = {0: "Awful", 10: "Enemies", 20: "Terrible", 30: "Not Too Great", 40: "Worse than average", 50: "Barely", 60: "Not Bad", 70: "Pretty Good", 80: "Great", 90: "Amazing", 100: "PERFECT!", 101: "WOAH!!"}
+
+@bot.tree.command(name="ship", description="Ship 2 discord users!")
+@app_commands.describe(user1="The first user", user2="The second user")
+async def ship(interaction: discord.Interaction, user1: discord.User, user2: discord.User):
+    print(f"{formatUsername(interaction.user)} ran /ship on {formatUsername(user1)} and {formatUsername(user2)}")
+    await interaction.response.defer(ephemeral=True)
+    if interaction.user.id == user1.id and interaction.user.id == user2.id:
+        await interaction.edit_original_response(content="You can't ship yourself with yourself!")
+    else:
+        percentage = getShip(user1.id, user2.id)
+        extratext = ""
+        if percentage == 69:
+            extratext = "nice"
+        else:
+            for index, value in textvalues.items():
+                if percentage == index or percentage > index:
+                    extratext = value
+        embed = discord.Embed(title=f"{percentage}% // {extratext}", color=discord.Color.random())
+        embed.add_field(name=f"User 1", value=f"{formatUsername(user1)}", inline=True)
+        embed.add_field(name=f"User 2", value=f"{formatUsername(user2)}", inline=True)
+
+        await interaction.edit_original_response(content=f"Shipping {formatUsername(user1)} and {formatUsername(user2)}...", embed=embed)
+
+@bot.tree.command(name="ship-random", description="Ships you with a random user from the same server!")
+async def shiprandom(interaction: discord.Interaction):
+    print(f"{formatUsername(interaction.user)} ran /ship-random")
+    await interaction.response.defer(ephemeral=True)
+    members = interaction.guild.members
+    realmembers = [member for member in members if not member.bot and not member.id == interaction.user.id or member.id == 1272100624208625716]
+    selected = random.choice(realmembers)
+    percentage = getShip(interaction.user.id, selected.id)
+    extratext = ""
+    if percentage == 69:
+        extratext = "nice"
+    else:
+        for index, value in textvalues.items():
+            if percentage == index or percentage > index:
+                extratext = value
+    embed = discord.Embed(title=f"{percentage}% // {extratext}", color=discord.Color.random())
+    embed.add_field(name=f"User 1", value=f"{formatUsername(interaction.user)}", inline=True)
+    embed.add_field(name=f"User 2", value=f"{formatUsername(selected)}", inline=True)
+
+    await interaction.edit_original_response(content=f"Shipping {formatUsername(interaction.user)} and {formatUsername(selected)}...", embed=embed)
 
 # --fun--
 @bot.tree.command(name="random-number", description="Picks a random number from 1 to your choice!")

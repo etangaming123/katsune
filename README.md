@@ -37,7 +37,7 @@ Supporters have more features, such as setting a custom pfp, having a yellow emb
 
 Here's an example of a Katsuprofile:
 
-![my katsuprofile in ghost hunt's server](./docs/katsuprofile.png)
+![my katsuprofile in ghost hunt's server](https://raw.githubusercontent.com/etangaming123/katsune/refs/heads/main/docs/katsuprofile.png)
 
 ## Other commands
 
@@ -51,7 +51,7 @@ Good noodles is like a rewards system that owners of servers can use to give out
 
 ### /catwoman
 
-![a screenshot](./docs/thatonescreenshot.png)
+![a screenshot](https://raw.githubusercontent.com/etangaming123/katsune/refs/heads/main/docs/thatonescreenshot.png)
 
 ### /ship
 

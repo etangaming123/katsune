@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.27 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.28 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -178,7 +178,7 @@ def setDiscordUserID(robloxid: int, discordid: int): # sets the discord user id 
         olddata = loadData("linkedrobloxaccounts")
         if olddata == "":
             return False # return false if this fails
-        olddata[discordid] = {"RobloxID": robloxid, "Verified": False, "Supporter": False} # Don't you want me like I want you, baby? (i was bored ok)
+        olddata[discordid] = {"RobloxID": robloxid, "Verified": False, "Supporter": False} # Don't you want me like I want you, baby? (i was bored ok) < past etan what the hell were you doing
         return saveData("linkedrobloxaccounts", olddata) # this function returns true if it succeeds
     else:
         print(f"Failed to link Roblox {robloxid} with {discordid} // {response.json()}")
@@ -214,7 +214,7 @@ def unlinkUser(discordid: int, robloxid: int): # self explanatory (also returns 
         print(f"Failed to unlinklink Roblox {robloxid} with {discordid} // Response 1 {response1.json()} // Response 2 {response2.json()}")
         return False
 
-def getRobloxDetails(username: str): # gets details of a roblox account
+def getRobloxDetails(username: str): # gets details of a roblox account by their username
     print(f"Getting Roblox details of Roblox username {username}")
     url = "https://users.roblox.com/v1/usernames/users"
     
@@ -238,7 +238,7 @@ def getRobloxDetails(username: str): # gets details of a roblox account
         traceback.print_exc()
         return "Error"
 
-async def getUserOwnsGamepasses(userid: int):
+async def getUserOwnsGamepasses(userid: int): # checks if user owns any of the supporter gamepasses
     global supportergamepassids
     async with aiohttp.ClientSession() as session:
         for item in supportergamepassids:
@@ -253,7 +253,7 @@ async def getUserOwnsGamepasses(userid: int):
                 print(f"Scanning {userid}'s gamepasses failed - {e}")
     return False
 
-def getRobloxDetailsByID(id: int):
+def getRobloxDetailsByID(id: int): # gets details of a roblox account by their id
     try:
         url = f'https://users.roblox.com/v1/users/{id}'
         response = requests.get(url)
@@ -415,8 +415,8 @@ async def addConversationStarter(interaction: discord.Interaction, conversation_
                 if conversationstarterdata == "":
                     await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n\- Adding conversation starter \"{conversation_starter}\"...\n\> An internal error occured while getting data.")
                     return
-                conversation_starter_id = len(conversationstarterdata) + 1
-                conversationstarterdata[str(conversation_starter_id)] = conversation_starter
+                conversation_starter_id = max(map(int, conversationstarterdata.keys()), default=0) + 1 
+                conversationstarterdata[str(conversation_starter_id)] = conversation_starter # could've used lists but too bad
                 if saveData("conversationstarters", conversationstarterdata):
                     await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n\- Adding conversation starter \"{conversation_starter}\"...\n\> Added conversation starter with id {str(conversation_starter_id)}")
                 else:
@@ -447,7 +447,7 @@ async def addConversationStarter(interaction: discord.Interaction, conversation_
         if not conversation_starter_id in conversationstarterdata.keys():
             await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n\- Finding conversation starter with ID {conversation_starter_id}\n\> Conversation starter ID {conversation_starter_id} does not exist!")
             return
-        conversation_starter = conversationstarterdata[str(conversation_starter_id)]
+        conversation_starter = conversationstarterdata[str(conversation_starter_id)] # yeah i DEFINITELY should have used lists
         class ConfirmButtonDeleteConversationStarter(discord.ui.view):
             @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
             async def confirmbuttonconversationstarter(self, interaction, button):
@@ -457,7 +457,7 @@ async def addConversationStarter(interaction: discord.Interaction, conversation_
                     if conversationstarterdata == "":
                         await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n\- Deleting conversation starter \"{conversation_starter}\"...\n\> An internal error occured while getting data.")
                         return
-                    del conversationstarterdata[str(conversation_starter_id)]
+                    del conversationstarterdata[str(conversation_starter_id)] # sigh...
                     if saveData("conversationstarters", conversationstarterdata):
                         await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n\- Deleting conversation starter \"{conversation_starter}\"...\n\> Deleted conversation starter with id {str(conversation_starter_id)}")
                     else:
@@ -773,7 +773,8 @@ async def viewkatsuprofile(interaction: discord.Interaction, user: discord.User)
                 embed.add_field(name="Display name", value=f"@{robloxuser['Username']}")
 
         if profile["Pfp"] == "Discord":
-            embed.set_image(url=user.avatar.url)
+            if user.avatar != None:
+                embed.set_thumbnail(url=user.avatar.url)
         elif profile["Pfp"] == "Roblox":
             try:
                 url = f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={robloxuserid}&size=420x420&format=Png&isCircular=false"
@@ -781,7 +782,7 @@ async def viewkatsuprofile(interaction: discord.Interaction, user: discord.User)
                 if response.status_code == 200:
                     data = response.json()
                     imageurl = data['data'][0]['imageUrl']
-                    embed.set_image(url=imageurl)
+                    embed.set_thumbnail(url=imageurl)
                 else:
                     print("Failed to fetch image from Roblox API")
             except Exception:
@@ -789,7 +790,7 @@ async def viewkatsuprofile(interaction: discord.Interaction, user: discord.User)
                 traceback.print_exc()
 
         elif profile["Pfp"] == "Custom":
-            embed.set_image(url=profile["CustomPfp"])
+            embed.set_thumbnail(url=profile["CustomPfp"])
         
         if profile["AboutMe"] != "":
             embed.add_field(name="About me", value=profile["AboutMe"], inline=False)
@@ -1035,7 +1036,7 @@ async def delete_katsuprofile(interaction: discord.Interaction):
     await interaction.edit_original_response(content="# >> KatsuProfiles <<\n\> Are you sure you want to delete your KatsuProfile? This action cannot be undone.", view=ConfirmDeleteKatsuProfile())
 
 # --shipping--
-def saveShip(userid1, userid2, newvalue):
+def saveShip(userid1, userid2, newvalue): # extra save functions because i'm too lazy to use the old ones! these ones were from a diff bot that i coded btw
     with open("ships.pkl", "rb") as file:
         data = pickle.load(file)
     selectedindex = ""
@@ -1072,7 +1073,7 @@ def getShip(userid1, userid2):
     else:
         return data[selectedindex]
     
-textvalues = {0: "Awful", 10: "Enemies", 20: "Terrible", 30: "Not Too Great", 40: "Worse than average", 50: "Barely", 60: "Not Bad", 70: "Pretty Good", 80: "Great", 90: "Amazing", 100: "PERFECT!", 101: "WOAH!!"}
+textvalues = {0: "Awful", 10: "Enemies", 20: "Terrible", 30: "Not Too Great", 40: "Worse than average", 50: "Barely", 60: "Not Bad", 70: "Pretty Good", 80: "Great", 90: "Amazing", 100: "PERFECT!", 101: "WOAH!!"} # anything above 100 isnt even possible
 
 @bot.tree.command(name="ship", description="Ship 2 discord users!")
 @app_commands.describe(user1="The first user", user2="The second user")

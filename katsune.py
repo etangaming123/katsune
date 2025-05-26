@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.28 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.29 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -288,7 +288,7 @@ async def on_member_join(member):
     await sendwelcome(member.mention)
 
 @bot.event
-async def on_member_leave(member):
+async def on_member_remove(member):
     await sendbye(member.mention)
 
 # [ slash commands + others ]

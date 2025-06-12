@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.29 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.30 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -392,6 +392,26 @@ async def getConversationStarter(interaction: discord.Interaction):
         await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n\- Getting random conversation starter...\n\> \"{data[str(number)]}\" (ID: {str(number)})")
     except Exception:
         print(f"{formatUsername(interaction.user)} executed /conversation-starter and errored, error logs:")
+        traceback.print_exc()
+        await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
+
+# --conversation starters--
+@bot.tree.command(name="conversation-starter-id", description="Get a conversation starter by its id!")
+@app_commands.describe(id="The ID of the conversation starter.")
+async def getConversationStarter(interaction: discord.Interaction, id: int):
+    print(f"{formatUsername(interaction.user)} executed /conversation-starter-id")
+    await interaction.response.send_message(content=f"# >> Conversation Starters <<\n\> Getting conversation starter with id {id}...")
+    try:
+        data = loadData("conversationstarters")
+        if data == "":
+            await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n\- Getting conversation starter with id {id}...\> An error occured while reading internal data.")
+            return
+        if str(id) not in data.keys():
+            await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n\- Getting conversation starter with id {id}...\n\> The conversation starter ID {id} does not exist!")
+            return
+        await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n\- Getting conversation starter with id {id}...\n\> \"{data[str(id)]}\" (ID: {str(id)})")
+    except Exception:
+        print(f"{formatUsername(interaction.user)} executed /conversation-starter-id and errored, error logs:")
         traceback.print_exc()
         await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
 

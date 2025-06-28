@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.30 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.31 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -464,11 +464,11 @@ async def addConversationStarter(interaction: discord.Interaction, conversation_
         if conversationstarterdata == "":
             await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n\- Finding conversation starter with ID {conversation_starter_id}\n\> Failed to load internal data!")
             return
-        if not conversation_starter_id in conversationstarterdata.keys():
+        if not str(conversation_starter_id) in conversationstarterdata.keys(): # easiest fix in all of history
             await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n\- Finding conversation starter with ID {conversation_starter_id}\n\> Conversation starter ID {conversation_starter_id} does not exist!")
             return
         conversation_starter = conversationstarterdata[str(conversation_starter_id)] # yeah i DEFINITELY should have used lists
-        class ConfirmButtonDeleteConversationStarter(discord.ui.view):
+        class ConfirmButtonDeleteConversationStarter(discord.ui.View): # yeah and this too
             @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green)
             async def confirmbuttonconversationstarter(self, interaction, button):
                 await interaction.response.send_message(content=f"# >> Conversation Starters <<\n\> Deleting conversation starter \"{conversation_starter}\"...", ephemeral=True)
@@ -488,6 +488,8 @@ async def addConversationStarter(interaction: discord.Interaction, conversation_
                     await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
         await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n\- Finding conversation starter with ID {conversation_starter_id}\n\> Are you sure you want to delete the following conversation starter?\n\> \"{conversation_starter}\"", view=ConfirmButtonDeleteConversationStarter())
     except Exception:
+        traceback.print_exc()
+        print(f"{formatUsername(interaction.user)} executed /delete-conversation-starter and errored, error logs:")
         await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
 
 # --anonymous messages--

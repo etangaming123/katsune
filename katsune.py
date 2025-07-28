@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.31 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.41 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -22,7 +22,7 @@ robloxapikey = sensitivedata["robloxapikey"]
 
 # [ data setup ]
 # if the .pkl files are not found, katsune will automatically create them
-datastores = ["readnotices", "bannedanons", "conversationstarters", "katsuprofiles", "linkedrobloxaccounts", "anonymousmessages"]
+datastores = ["readnotices", "bannedanons", "conversationstarters", "katsuprofiles", "linkedrobloxaccounts", "anonymousmessages", "fancyban"]
 for item in datastores:
     if not os.path.exists(f"{item}.pkl"):
         with open(f"{item}.pkl", "wb") as file:
@@ -395,7 +395,6 @@ async def getConversationStarter(interaction: discord.Interaction):
         traceback.print_exc()
         await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
 
-# --conversation starters--
 @bot.tree.command(name="conversation-starter-id", description="Get a conversation starter by its id!")
 @app_commands.describe(id="The ID of the conversation starter.")
 async def getConversationStarter(interaction: discord.Interaction, id: int):
@@ -1183,6 +1182,153 @@ async def say(interaction: discord.Interaction, message: str):
             await interaction.response.send_message("An error occured while making the bot say something. Please report this to etangaming123.", ephemeral=True)
         return
     await interaction.response.send_message("You do not have permission to run this command, sorry!", ephemeral=True)
+
+# fancy ban
+@bot.tree.command(name="create-fancy-ban", description="Create a fancy ban!")
+@app_commands.describe(user="The user to create a fancy ban for", amount="The amount of votes required to ban", codeword="Conformation codeword. If this is forgotten you must delete and recreate the fancy ban.")
+async def createfancyban(interaction: discord.Interaction, user: discord.User, amount: int, codeword: str):
+    if interaction.user.id in powerusers:
+        print(f"{formatUsername(interaction.user)} executed /create-fancy-ban on {formatUsername(user)}")
+        await interaction.response.defer(ephemeral=True)
+        bandata = loadData("fancyban")
+        if bandata == "":
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> Failed to load fancy ban data! Please report this to etangaming123.")
+            return
+        if user.id in bandata.keys():
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> This user already has a fancy ban! Please use /delete-fancy-ban to delete it.")
+            return
+        bandata[user.id] = {"Creator": interaction.user.id, "VotesRequired": amount, "Votes": [], "Codeword": codeword}  # Codeword is used to confirm the ban later
+        if saveData("fancyban", bandata):
+            embed = discord.Embed(title=f"Fancy Ban Created for {formatUsername(user)}", description=f"Created by {formatUsername(interaction.user)}\nVotes Required: {amount}", color=discord.Color.red())
+            embed.set_thumbnail(url=user.avatar.url if user.avatar else user.default_avatar.url)
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> Fancy ban created successfully!", embed=embed)
+        else:
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> Failed to save fancy ban data! Please report this to etangaming123.")
+    else:
+        await interaction.response.send_message("You do not have permission to run this command, sorry!", ephemeral=True)
+
+@bot.tree.command(name="delete-fancy-ban", description="Delete a fancy ban!")
+@app_commands.describe(user="The user to delete the fancy ban for")
+async def deletefancyban(interaction: discord.Interaction, user: discord.User):
+    if interaction.user.id in powerusers:
+        print(f"{formatUsername(interaction.user)} executed /delete-fancy-ban on {formatUsername(user)}")
+        await interaction.response.defer(ephemeral=True)
+        bandata = loadData("fancyban")
+        if bandata == "":
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> Failed to load fancy ban data! Please report this to etangaming123.")
+            return
+        if user.id not in bandata.keys():
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> This user does not have a fancy ban! Please use /create-fancy-ban to create one.")
+            return
+        del bandata[user.id]
+        if saveData("fancyban", bandata):
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> Fancy ban deleted successfully!")
+        else:
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> Failed to save fancy ban data! Please report this to etangaming123.")
+    else:
+        await interaction.response.send_message("You do not have permission to run this command, sorry!", ephemeral=True)
+
+@bot.tree.command(name="vote-fancy-ban", description="Vote to ban a user with a fancy ban!")
+@app_commands.describe(user="The user to vote for")
+async def votefancyban(interaction: discord.Interaction, user: discord.User):
+    haspermission = False
+    for role in interaction.user.roles:
+        if role.id in adminroleids:
+            haspermission = True
+            break
+    if haspermission:
+        print(f"{formatUsername(interaction.user)} executed /vote-fancy-ban on {formatUsername(user)}")
+        await interaction.response.defer()
+        bandata = loadData("fancyban")
+        if bandata == "":
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> Failed to load fancy ban data! Please report this to etangaming123.")
+            return
+        if user.id not in bandata.keys():
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> This user does not have a fancy ban! Please use /create-fancy-ban to create one. [Power users only]")
+            return
+        if interaction.user.id in bandata[user.id]["Votes"]:
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> You have already voted for this fancy ban!")
+            return
+        bandata[user.id]["Votes"].append(interaction.user.id)
+        if saveData("fancyban", bandata):
+            if len(bandata[user.id]["Votes"]) >= bandata[user.id]["VotesRequired"]:
+                await interaction.edit_original_response(content=f"# >> Fancy Ban <<\n\> Vote added. {formatUsername(user)} now has {len(bandata[user.id]['Votes'])} of {bandata[user.id]['VotesRequired']} votes required to ban them.\n\nThis user has enough votes to be banned. A power user must run /administer-fancy-ban to ban them.")
+            await interaction.edit_original_response(content=f"# >> Fancy Ban <<\n\> Vote added. {formatUsername(user)} now has {len(bandata[user.id]['Votes'])} of {bandata[user.id]['VotesRequired']} votes required to ban them.")
+        else:
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> Failed to save fancy ban data! Please report this to etangaming123.")
+    else:
+        await interaction.response.send_message("You do not have permission to run this command, sorry!", ephemeral=True)
+
+@bot.tree.command(name="administer-fancy-ban", description="Administer a fancy ban!")
+@app_commands.describe(user="The user to ban")
+async def administerfancyban(interaction: discord.Interaction, user: discord.User):
+    if interaction.user.id in powerusers:
+        print(f"{formatUsername(interaction.user)} executed /administer-fancy-ban on {formatUsername(user)}")
+        await interaction.response.defer(ephemeral=True)
+        bandata = loadData("fancyban")
+        if bandata == "":
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> Failed to load fancy ban data! Please report this to etangaming123.")
+            return
+        if user.id not in bandata.keys():
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> This user does not have a fancy ban! Please use /create-fancy-ban to create one. [Power users only]")
+            return
+        if len(bandata[user.id]["Votes"]) < bandata[user.id]["VotesRequired"]:
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> This user does not have enough votes to be banned!")
+            return
+        if server is None:
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> Failed to get guild! Please report this to etangaming123.")
+            return
+        member = server.get_member(user.id)
+        if member is None:
+            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> Failed to get member! Please report this to etangaming123.")
+            return
+        
+        class BanDescriptionModal(discord.ui.Modal, title="Ban Description"):
+            description = discord.ui.TextInput(
+                label="Ban Description",
+                style=discord.TextStyle.long,
+                placeholder="Enter the reason for the ban.",
+                required=True,
+                max_length=512
+            )
+
+            async def on_submit(self, interaction: discord.Interaction):
+                await interaction.response.send_message(
+                    "Please type in the codeword to continue.", ephemeral=True
+                )
+
+                def check(m):
+                    return m.author.id in powerusers and m.channel == interaction.channel
+
+                try:
+                    msg = await bot.wait_for("message", check=check, timeout=60)
+                    if msg.content.strip() == bandata[user.id]["Codeword"]:
+                        try:
+                            await member.ban(reason=self.description.value)
+                            del bandata[user.id]
+                            saveData("fancyban", bandata)
+                            await interaction.followup.send(
+                                f"🤣👍", # REPO REFERENCE!!!
+                                ephemeral=True
+                            )
+                        except discord.Forbidden:
+                            await interaction.followup.send(
+                                "# >> Fancy Ban <<\n\> I do not have permission to ban this user!",
+                                ephemeral=True
+                            )
+                    else:
+                        await interaction.followup.send(
+                            "# >> Fancy Ban <<\n\> Incorrect codeword. Ban cancelled.",
+                            ephemeral=True
+                        )
+                except Exception:
+                    await interaction.followup.send(
+                        "# >> Fancy Ban <<\n\> Timed out or error occurred. Ban cancelled.",
+                        ephemeral=True
+                    )
+        await interaction.response.send_modal(BanDescriptionModal())
+    else:
+        await interaction.response.send_message("You do not have permission to run this command, sorry!", ephemeral=True)
 
 bot.run(bottoken) # run.
 

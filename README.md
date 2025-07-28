@@ -39,7 +39,7 @@ Here's an example of a Katsuprofile:
 
 ![my katsuprofile in ghost hunt's server](https://raw.githubusercontent.com/etangaming123/katsune/refs/heads/main/docs/katsuprofile.png)
 
-## Other commands
+## Other features
 
 ### Good Noodles
 
@@ -56,6 +56,14 @@ Good noodles is like a rewards system that owners of servers can use to give out
 ### /ship
 
 shipping is literally a random number generator and should not be taken seriously.
+
+### Fancy banning
+
+Ever had a debate with your mod team whether to ban someone on your server or not? Fancybans will fix that!
+
+Fancybans allow server owners (or power users) to make a vote to ban a specific user, and once that number of votes has been reached, they will be able to administer the ban with a simple command.
+
+By default, only staff in your server can vote to ban.
 
 ## Your own usage
 

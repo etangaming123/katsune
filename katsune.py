@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.41 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.42 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -1308,23 +1308,19 @@ async def administerfancyban(interaction: discord.Interaction, user: discord.Use
                             del bandata[user.id]
                             saveData("fancyban", bandata)
                             await interaction.followup.send(
-                                f"🤣👍", # REPO REFERENCE!!!
-                                ephemeral=True
+                                f"🤣👍" # REPO REFERENCE!!!
                             )
                         except discord.Forbidden:
                             await interaction.followup.send(
-                                "# >> Fancy Ban <<\n\> I do not have permission to ban this user!",
-                                ephemeral=True
+                                "# >> Fancy Ban <<\n\> I do not have permission to ban this user!"
                             )
                     else:
                         await interaction.followup.send(
-                            "# >> Fancy Ban <<\n\> Incorrect codeword. Ban cancelled.",
-                            ephemeral=True
+                            "# >> Fancy Ban <<\n\> Incorrect codeword. Ban cancelled."
                         )
                 except Exception:
                     await interaction.followup.send(
-                        "# >> Fancy Ban <<\n\> Timed out or error occurred. Ban cancelled.",
-                        ephemeral=True
+                        "# >> Fancy Ban <<\n\> Timed out or error occurred. Ban cancelled."
                     )
         await interaction.response.send_modal(BanDescriptionModal())
     else:

@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.42 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.43 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -607,7 +607,7 @@ async def manageanonymousmessage(interaction: discord.Interaction, id: int):
     async def deleteAnonMessage(interaction, anonmessageid): 
         anonchannel = await bot.fetch_channel(anonchannelid)
         message = await anonchannel.fetch_message(anonmessageid)
-        await bot.delete_message(message)
+        await message.delete()
         await interaction.response.send_message("Deleted that message!", ephemeral=True)
 
     if isyourself:
@@ -1264,25 +1264,25 @@ async def votefancyban(interaction: discord.Interaction, user: discord.User):
 async def administerfancyban(interaction: discord.Interaction, user: discord.User):
     if interaction.user.id in powerusers:
         print(f"{formatUsername(interaction.user)} executed /administer-fancy-ban on {formatUsername(user)}")
-        await interaction.response.defer(ephemeral=True)
         bandata = loadData("fancyban")
         if bandata == "":
-            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> Failed to load fancy ban data! Please report this to etangaming123.")
+            await interaction.response.send_message(content="# >> Fancy Ban <<\n\> Failed to load fancy ban data! Please report this to etangaming123.")
             return
         if user.id not in bandata.keys():
-            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> This user does not have a fancy ban! Please use /create-fancy-ban to create one. [Power users only]")
+            await interaction.response.send_message(content="# >> Fancy Ban <<\n\> This user does not have a fancy ban! Please use /create-fancy-ban to create one. [Power users only]")
             return
         if len(bandata[user.id]["Votes"]) < bandata[user.id]["VotesRequired"]:
-            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> This user does not have enough votes to be banned!")
+            await interaction.response.send_message(content="# >> Fancy Ban <<\n\> This user does not have enough votes to be banned!")
             return
         if server is None:
-            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> Failed to get guild! Please report this to etangaming123.")
+            await interaction.response.send_message(content="# >> Fancy Ban <<\n\> Failed to get guild! Please report this to etangaming123.")
             return
-        member = server.get_member(user.id)
-        if member is None:
-            await interaction.edit_original_response(content="# >> Fancy Ban <<\n\> Failed to get member! Please report this to etangaming123.")
+        try:
+            member = await server.fetch_member(user.id)
+        except discord.NotFound:
+            await interaction.response.send_message(content="# >> Fancy Ban <<\n\> Failed to get member! Please report this to etangaming123.")
             return
-        
+
         class BanDescriptionModal(discord.ui.Modal, title="Ban Description"):
             description = discord.ui.TextInput(
                 label="Ban Description",

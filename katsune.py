@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.45 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.46 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -22,7 +22,7 @@ robloxapikey = sensitivedata["robloxapikey"]
 
 # [ data setup ]
 # if the .pkl files are not found, katsune will automatically create them
-datastores = ["readnotices", "bannedanons", "conversationstarters", "katsuprofiles", "linkedrobloxaccounts", "anonymousmessages", "fancyban"]
+datastores = ["readnotices", "bannedanons", "conversationstarters", "katsuprofiles", "linkedrobloxaccounts", "anonymousmessages", "fancyban", "subtleban"]
 for item in datastores:
     if not os.path.exists(f"{item}.pkl"):
         with open(f"{item}.pkl", "wb") as file:
@@ -30,6 +30,7 @@ for item in datastores:
         print(f"Created new file [{item}.pkl]")
 
 # [ variables ]
+# future etan here i should really use envs but oh well
 # --data--
 defaultkatsuprofile = {"AboutMe": "", "DisplayRoblox": False, "DisplaySupporter": False, "DisplayGoodNoodles": False, "Pfp": "Discord", "CustomPFPUrl": "", "DisplayName": "DiscordDisplay", "Name": "DiscordUser"}
 
@@ -47,11 +48,11 @@ goodnoodleroleid = 1107836361920217118 # the good noodle role's id
 adminroleids = [883261775510921256, 883261098059522078] # users with these role ids gain specific permisions
 powerusers = [723053854194663456, 627196747676123146] # users with these ids gain even more perms, but do not have the same perms as the above
 robloxgameid = 6869030592 # roblox: the game id that has its datastores linked or smth
-gamepassids = [] # gamepass ids for katsune supporter
 emojilist = ["👻", "💸", "💡", "💥", "🍬", "🤖", "🖥️", "🎮", "🔨"] # supports any string
 serverid = 883235310580957234 # the id of the bot's current server
 supportergamepassids = [68822, 361065, 618024, 622162, 636742, 637007, 1056036590, 10136141, 10136132, 10136106, 10136059, 3656940] # enter in the gamepass ids to gain supporter for katsuprofile (the user has to own at least one)
 server = None # set to none for now, this will be initialised later
+katsuverifyplacelink = "https://www.roblox.com/games/140030248253073/Katsune-Verification-Place" # link to katsune verification place on road block
 
 # --other--
 pfpdisplays = ["Discord", "Roblox", "Custom"] # the pfps that can be displayed on katsuprofiles
@@ -103,12 +104,9 @@ async def sendVerificationSystem(): # sends the verify button in the verificatio
             super().__init__(timeout=None) # no button timeout
         @discord.ui.button(label="Verify", style=discord.ButtonStyle.green)
         async def confirmbuttonverify(self, interaction, button):
-            if interaction.user.id == 1237124506904952835: # this is the guy that keeps joining and leaving to beg for badges
-                await interaction.response.send_message(content="# You are unwelcome.\nDon't come back only to beg for badges, idiot.", ephemeral=True)
-                return
-            elif interaction.user.id == 1408382112792576053: # this is the other guy that keeps joining and leaving but idk why lol
-                await interaction.response.send_message(content="nah, i don't feel like it. please stop joining and then leaving again.\nif you wish to enter the server send a 67 word essay explaining why you want to rejoin to @etangaming123's dms.", ephemeral=True)
-                return
+            subtlebandata = loadData("subtleban")
+            if interaction.user.id in subtlebandata.keys():
+                await interaction.response.send_message(content=subtlebandata[interaction.user.id], ephemeral=True) # in case we don't feel like telling them they're banned
             if verifiedroleid in [role.id for role in interaction.user.roles]: # check if user is already verified
                 await interaction.response.send_message(content="You are already verified!", ephemeral=True)
                 return
@@ -122,6 +120,9 @@ async def sendVerificationSystem(): # sends the verify button in the verificatio
                     try:
                         role = server.get_role(verifiedroleid)
                         await interaction.user.add_roles(role)
+                        logchannel = bot.get_channel(katsunelogid)
+                        await logchannel.send(f"{formatUsername(interaction.user)} has verified.")
+                        await sendwelcome(interaction.user.mention)
                     except Exception:
                         print(f"{formatUsername(interaction.user)} attempted to verify and errored, error logs:")
                         traceback.print_exc()
@@ -291,11 +292,14 @@ async def on_ready():
 
 @bot.event
 async def on_member_join(member):
-    await sendwelcome(member.mention)
+    logchannel = bot.get_channel(katsunelogid)
+    await logchannel.send(f"{formatUsername(member)} has joined the server.")
 
 @bot.event
 async def on_member_remove(member):
     await sendbye(member.mention)
+    logchannel = bot.get_channel(katsunelogid)
+    await logchannel.send(f"{formatUsername(member)} has left the server.")
 
 # [ slash commands + others ]
 # --roblox--
@@ -310,7 +314,7 @@ async def verifystep1(interaction: discord.Interaction, username: str):
             await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n\-Getting details...\n\> Failed to read internal data! Please try again.")
             return
         if interaction.user.id in data.keys(): # check if user is already linked
-            await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n\-Getting details...\n\> Your account is already linked! Join [this Roblox game](https://www.roblox.com/games/140030248253073/Katsune-Verification-Place) to continue verification, or run /unlink-roblox to change your Roblox user!")
+            await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n\-Getting details...\n\> Your account is already linked! Join [this Roblox game]({katsuverifyplacelink}) to continue verification, or run /unlink-roblox to change your Roblox user!") # ya might need to change this one
             return
         userinfo = getRobloxDetails(username)
         await interaction.edit_original_response(content=f"# >> Katsune Verification <<\n\-Getting details...\n\> Getting info of {username}...")
@@ -498,7 +502,7 @@ async def addConversationStarter(interaction: discord.Interaction, conversation_
         await interaction.edit_original_response(content=f"# >> Conversation Starters <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
 
 # --anonymous messages--
-# anon messages do not have print() functions as to maximise well anonymous something
+# * anon messages do not have print() functions as to maximise well anonymous something
 class AnonForm(discord.ui.Modal, title='Anonymous Message Form'): # this isn't a slash command but ok !
     message = discord.ui.TextInput(
         label='Your message',
@@ -591,7 +595,7 @@ async def manageanonymousmessage(interaction: discord.Interaction, id: int):
         if bannedusers == "":
             await interaction.response.send_message("Failed to load banned anons! Please try again.", ephemeral=True)
             return
-        bannedusers[anondata["UserID"]] = interaction.user.id # {userthatwasbanned: userthatbannedtheuserthatwasbanned} <-- bro etan this is the WORST way you could've handled this <-- wait no this is actually kinda smart cuz it logs whoever banned that user so if you go into the pkl file then uh yeah
+        bannedusers[anondata["UserID"]] = interaction.user.id # ? {userthatwasbanned: userthatbannedtheuserthatwasbanned} <-- bro etan this is the WORST way you could've handled this <-- wait no this is actually kinda smart cuz it logs whoever banned that user so if you go into the pkl file then uh yeah <-- ?????
         if saveData("bannedanons", bannedusers):
             await interaction.response.send_message("Banned anon user sucessfully!", ephemeral=True)
             return
@@ -683,7 +687,7 @@ async def goodNoodleLeaderboard(interaction: discord.Interaction):
             try:
                 user = formatUsername(bot.get_user(item))
             except Exception:
-                user = f"Unknown User (ID {item})" # probably when the user has left the server
+                user = f"Unknown User (ID {item})" # ? probably when the user has left the server
             leaderboard += f"\n\> {user} - {str(sorteddata[item])} ⭐"
         await interaction.edit_original_response(content=f"# >> Good Noodles <<\n\- One second, getting good noodles...\n\> Good noodle leaderboard:\n{leaderboard}")
     except Exception:
@@ -800,8 +804,11 @@ async def viewkatsuprofile(interaction: discord.Interaction, user: discord.User)
                 embed.add_field(name="Display name", value=f"@{robloxuser['Username']}")
 
         if profile["Pfp"] == "Discord":
-            if user.avatar != None:
-                embed.set_thumbnail(url=user.avatar.url)
+            if user.display_avatar != None:
+                embed.set_thumbnail(url=user.display_avatar.url)
+            else:
+                if user.avatar != None:
+                    embed.set_thumbnail(url=user.avatar.url)
         elif profile["Pfp"] == "Roblox":
             try:
                 url = f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={robloxuserid}&size=420x420&format=Png&isCircular=false"
@@ -1166,7 +1173,7 @@ async def changestatus(interaction: discord.Interaction, state: str):
         return
     await interaction.response.send_message("You do not have permission to run this command, sorry!", ephemeral=True)
 
-@bot.tree.command(name="catwoman", description="@Antimatternova") # context: antimatternova requested this command as a joke to troll catulus next livestream
+@bot.tree.command(name="catwoman", description="@Antimatternova") # * context: antimatternova requested this command as a joke to troll catulus next livestream
 async def catwoman(interaction: discord.Interaction):
     randomurls = ["https://cdn.discordapp.com/attachments/1363647904706990213/1363648005227675838/artworks-5sj56rNx0PpjXmnZ-ZTA3DA-t1080x1080.png?ex=6806cbab&is=68057a2b&hm=1a3ddd830e15e171c73d0dc1c12cf3f626a4c0c077b06de44cef81341fbceb1d&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363648090195759134/Catwoman_Infobox.png?ex=6806cbc0&is=68057a40&hm=f72a0c30a7008ddf29e2066e0c8198bc992d6c426d7e621dcd684495fd6e777e&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363648311130587267/Batman_Catwoman_Cv1_5f5a90d860f7f3.png?ex=6806cbf4&is=68057a74&hm=8ac79dbd4a88faeb716271586a78868614498da539bdb6f03e2c8abd7ebebb61&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363649026116944022/Batman-One-Bad-Day-Catwoman-Main-Cover-e1674486774532.png?ex=6806cc9f&is=68057b1f&hm=0eeab3bbb60a005c099aaa035a3f654afe26ecc677a696cd1747a9e5db8ff2e3&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363649064314343516/Catwoman-Batman.png?ex=6806cca8&is=68057b28&hm=09a50a20700b45d6c67ba77da0f63707f168f8d80ea264be7b8224a8d40133c7&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363649173093617846/GalleryComics_1900x900_20140423_CTW_Cv30_5e990721567896.png?ex=6806ccc2&is=68057b42&hm=bb39ea4df9f718bb8533934ffdc14b782541e093ebaa104aedf9acfc59dc4a71&", "https://cdn.discordapp.com/attachments/1363647904706990213/1363649378304135198/images.png?ex=6806ccf3&is=68057b73&hm=be08f61221cc1a3a577c4cf20d92fe5889db24a4fb294b3241c9b7adb791f157&"] # boo :3
     if random.randint(0, 1000) == 1000:
@@ -1329,6 +1336,36 @@ async def administerfancyban(interaction: discord.Interaction, user: discord.Use
                         "# >> Fancy Ban <<\n\> Timed out or error occurred. Ban cancelled."
                     )
         await interaction.response.send_modal(BanDescriptionModal())
+    else:
+        await interaction.response.send_message("You do not have permission to run this command, sorry!", ephemeral=True)
+
+@bot.tree.command(name="subtleban", description="dw about it (just check source code of this command)")
+@app_commands.describe(user="user id", message="what will they see when reverifying?")
+async def subtleban(interaction: discord.Interaction, user: str, message: str):
+    if interaction.user.id in powerusers:
+        print(f"{formatUsername(interaction.user)} executed /subtleban on {formatUsername(user)}")
+        try:
+            subtlebandata = loadData("subtleban")
+            if subtlebandata == "":
+                await interaction.response.send_message(content="# >> Subtle Ban <<\n\> Failed to load subtle ban data! Please report this to etangaming123.", ephemeral=True)
+                return
+            if user.id in subtlebandata.keys():
+                await interaction.response.send_message(content="# >> Subtle Ban <<\n\> This user is already subtly banned!", ephemeral=True)
+                return
+            subtlebandata[user.id] = message
+            if saveData("subtleban", subtlebandata):
+                await interaction.response.send_message(content="# >> Subtle Ban <<\n\> Subtle ban created successfully!", ephemeral=True)
+            else:
+                await interaction.response.send_message(content="# >> Subtle Ban <<\n\> Failed to save subtle ban data! Please report this to etangaming123.", ephemeral=True)
+            loggingchannel = bot.get_channel(katsunelogid)
+            if loggingchannel is not None:
+                embed = discord.Embed(title="Subtle Ban Executed", description=f"User ID: {user.id}\nExecuted by: {formatUsername(interaction.user)}", color=discord.Color.dark_red())
+                embed.add_field(name="Message", value=message, inline=False)
+                await loggingchannel.send(embed=embed)
+        except Exception:
+            print(f"{formatUsername(interaction.user)} executed /subtleban and errored, error logs:")
+            traceback.print_exc()
+            await interaction.response.send_message("An error occured while executing subtle ban. Please report this to etangaming123.", ephemeral=True)
     else:
         await interaction.response.send_message("You do not have permission to run this command, sorry!", ephemeral=True)
 

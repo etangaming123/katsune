@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.48 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.49 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -1342,51 +1342,53 @@ async def administerfancyban(interaction: discord.Interaction, user: discord.Use
 @bot.tree.command(name="subtleban", description="dw about it (just check source code of this command)")
 @app_commands.describe(user="user id", message="what will they see when reverifying?")
 async def subtleban(interaction: discord.Interaction, user: str, message: str):
+    await interaction.response.defer(ephemeral=True)
     if interaction.user.id in powerusers:
         print(f"{formatUsername(interaction.user)} executed /subtleban on user id {user}")
         try:
             subtlebandata = loadData("subtleban")
             if subtlebandata == "":
-                await interaction.response.send_message(content="# >> Subtle Ban <<\n\> Failed to load subtle ban data! Please report this to etangaming123.", ephemeral=True)
+                await interaction.edit_original_response(content="# >> Subtle Ban <<\n\> Failed to load subtle ban data! Please report this to etangaming123.", ephemeral=True)
                 return
-            if user.id in subtlebandata.keys():
-                await interaction.response.send_message(content="# >> Subtle Ban <<\n\> This user is already subtly banned!", ephemeral=True)
+            if user in subtlebandata.keys():
+                await interaction.edit_original_response(content="# >> Subtle Ban <<\n\> This user is already subtly banned!", ephemeral=True)
                 return
-            subtlebandata[user.id] = message
+            subtlebandata[user] = message
             if saveData("subtleban", subtlebandata):
-                await interaction.response.send_message(content="# >> Subtle Ban <<\n\> Subtle ban created successfully!", ephemeral=True)
+                await interaction.edit_original_response(content="# >> Subtle Ban <<\n\> Subtle ban created successfully!", ephemeral=True)
             else:
-                await interaction.response.send_message(content="# >> Subtle Ban <<\n\> Failed to save subtle ban data! Please report this to etangaming123.", ephemeral=True)
+                await interaction.edit_original_response(content="# >> Subtle Ban <<\n\> Failed to save subtle ban data! Please report this to etangaming123.", ephemeral=True)
             loggingchannel = bot.get_channel(katsunelogid)
             if loggingchannel is not None:
-                embed = discord.Embed(title="Subtle Ban Executed", description=f"User ID: {user.id}\nExecuted by: {formatUsername(interaction.user)}", color=discord.Color.dark_red())
+                embed = discord.Embed(title="Subtle Ban Executed", description=f"User ID: {user}\nExecuted by: {formatUsername(interaction.user)}", color=discord.Color.dark_red())
                 embed.add_field(name="Message", value=message, inline=False)
                 await loggingchannel.send(embed=embed)
         except Exception:
             print(f"{formatUsername(interaction.user)} executed /subtleban and errored, error logs:")
             traceback.print_exc()
-            await interaction.response.send_message("An error occured while executing subtle ban. Please report this to etangaming123.", ephemeral=True)
+            await interaction.edit_original_response(content="An error occured while executing subtle ban. Please report this to etangaming123.", ephemeral=True)
     else:
-        await interaction.response.send_message("You do not have permission to run this command, sorry!", ephemeral=True)
+        await interaction.edit_original_response(content="You do not have permission to run this command, sorry!", ephemeral=True)
 
 @bot.tree.command(name="unsubtleban", description="UNDO UNDO UNDO!!!")
 @app_commands.describe(user="user id")
 async def unsubtleban(interaction: discord.Interaction, user: str):
+    await interaction.response.defer(ephemeral=True)
     if interaction.user.id in powerusers:
         print(f"{formatUsername(interaction.user)} executed /unsubtleban on user id {user}")
         try:
             subtlebandata = loadData("subtleban")
             if subtlebandata == "":
-                await interaction.response.send_message(content="# >> Subtle Ban <<\n\> Failed to load subtle ban data! Please report this to etangaming123.", ephemeral=True)
+                await interaction.edit_original_response(content="# >> Subtle Ban <<\n\> Failed to load subtle ban data! Please report this to etangaming123.", ephemeral=True)
                 return
             if user not in subtlebandata.keys():
-                await interaction.response.send_message(content="# >> Subtle Ban <<\n\> This user is not subtly banned!", ephemeral=True)
+                await interaction.edit_original_response(content="# >> Subtle Ban <<\n\> This user is not subtly banned!", ephemeral=True)
                 return
             del subtlebandata[user]
             if saveData("subtleban", subtlebandata):
-                await interaction.response.send_message(content="# >> Subtle Ban <<\n\> Subtle ban removed successfully!", ephemeral=True)
+                await interaction.edit_original_response(content="# >> Subtle Ban <<\n\> Subtle ban removed successfully!", ephemeral=True)
             else:
-                await interaction.response.send_message(content="# >> Subtle Ban <<\n\> Failed to save subtle ban data! Please report this to etangaming123.", ephemeral=True)
+                await interaction.edit_original_response(content="# >> Subtle Ban <<\n\> Failed to save subtle ban data! Please report this to etangaming123.", ephemeral=True)
             loggingchannel = bot.get_channel(katsunelogid)
             if loggingchannel is not None:
                 embed = discord.Embed(title="Subtle Ban Removed", description=f"User ID: {user}\nExecuted by: {formatUsername(interaction.user)}", color=discord.Color.green())
@@ -1394,9 +1396,9 @@ async def unsubtleban(interaction: discord.Interaction, user: str):
         except Exception:
             print(f"{formatUsername(interaction.user)} executed /unsubtleban and errored, error logs:")
             traceback.print_exc()
-            await interaction.response.send_message("An error occured while removing subtle ban. Please report this to etangaming123.", ephemeral=True)
+            await interaction.edit_original_response(content="An error occured while removing subtle ban. Please report this to etangaming123.", ephemeral=True)
     else:
-        await interaction.response.send_message("You do not have permission to run this command, sorry!", ephemeral=True)
+        await interaction.edit_original_response(content="You do not have permission to run this command, sorry!", ephemeral=True)
 
 bot.run(bottoken) # run.
 

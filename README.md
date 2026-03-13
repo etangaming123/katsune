@@ -1,13 +1,25 @@
 # Katsune
 
-The Discord bot used in the server [Ghost Hunt](https://discord.gg/CpsCCqSAmq "The invite to the Discord Server")!
+The Discord bot used in the server [Catulus&#39; Cat Tree](https://discord.gg/CpsCCqSAmq "The invite to the Discord Server")!
 
 This bot's source code is **open source**, so free feel to use this for your own bot, or help with the development of this bot!
 
 > [!NOTE]
-> Katsune is still in its early stages of development, so some aspects may be low quality or non functional. If you find an error with usage of the bot in Ghost Hunt's official server, please [create a new issue here.](https://github.com/etangaming123/katsune/issues/new "Issue creation page")
+> Katsune is still in its early stages of development, so some aspects may be low quality or non functional. If you find an error with usage of the bot in Catulus' Cat Tree server, please [create a new issue here.](https://github.com/etangaming123/katsune/issues/new "Issue creation page")
+
+## Verification
+
+Tired of pesky spam bots? Katsune's got you! With a very simple "please click the right button to continue", bots are locked out and unable to chat, while real members can verify like a breeze.
+
+## Spam Bot Trap
+
+Katsune also comes packed with a "trap" feature, banning every spam bot that messages within a text channel!
+
+Please do note that the text channel has to be visible and allow everyone to send messages. Also, please do put in a very big notice that members will get banned upon typing.
 
 ## Roblox Integration
+
+This is optional!
 
 To link your Roblox account with Discord, run /roblox-link-step-1. You will need to enter your username.
 

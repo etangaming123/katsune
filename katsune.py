@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.50 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.51 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -37,7 +37,7 @@ defaultkatsuprofile = {"AboutMe": "", "DisplayRoblox": False, "DisplaySupporter"
 # --discord--
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 # OOO is replaced by @user for welcome and leave messages
-welcomemessages = ["OOO joined the server! Welcome!", "OOO.Parent = discord.Servers[\"Ghost Hunt (Roblox)\"]", "Another fellow ghost hunter joined us! Welcome OOO!", "OOO joined the asylum, they can never leave!"]
+welcomemessages = ["OOO joined the server! Welcome!", "OOO.Parent = discord.Servers[\"Catulus' Cat Tree\"]", "Another fellow cat (?) joined us! Welcome OOO!", "OOO joined the cat tree, they can never leave!", "Welcome to the cat tree, OOO!"]
 leavemessages = ["We were right, OOO didn't enjoy their stay!", "An unexpected error occurred and OOO needs to quit. We're sorry!", "OOO pressed the leave button on accident", "Shutting down OOO..."]
 memberjoinleavechannelid = 1125568412882583552 # channel id to say when a user leaves or joins
 verificationchannelid = 1129962618346553450 # channel to send verification confirmation message
@@ -283,7 +283,7 @@ async def on_ready():
     print("Syncing commands...")
     await bot.tree.sync() # this syncs slash commands to server
     print("Changing RPC...")
-    await changerpc("Roblox [Ghost Hunt]")
+    await changerpc("with a yarn ball")
     print("Setting up variables...")
     server = await bot.fetch_guild(serverid) # there we go !
     verificationchannel = bot.get_channel(verificationchannelid)
@@ -603,7 +603,7 @@ async def manageanonymousmessage(interaction: discord.Interaction, id: int):
         reportEmbed = discord.Embed(title=f"Report by {formatUsername(interaction.user)}", description=f"The user has reported an anonymous message with the following content:\n\n\"{message}\"")
         reportEmbed.set_footer(text=f"The image for this anon message, if any, was removed. If this report is genuine, run /manage-anon {id} and either delete the message or ban the user from making anonymous messages.")
         await loggingchannel.send(embed=reportEmbed)
-        await interaction.response.send_message("Report submitted! Thanks for making Ghost Hunt a better place :3", ephemeral=True) # :3
+        await interaction.response.send_message("Report submitted! Thanks for making Catulus' Cat tree a better place.", ephemeral=True) # dude what the fuck was i on ":3" ah hell nah
 
     async def banAnonUser(interaction, anondata):
         bannedusers = loadData("bannedanons")
@@ -864,7 +864,7 @@ async def viewkatsuprofile(interaction: discord.Interaction, user: discord.User)
         traceback.print_exc()
         await interaction.edit_original_response(content=f"# >> Katsune Profiles <<\n[ FATAL ERROR OCCURED ]\nUh oh!\nThis error was not accounted for within Katsune's source code.\n\nPlease screenshot this and report this to etangaming123.")
 
-@bot.tree.command(name="check-supporter", description="Gives you the supporter role if you have a gamepass from Ghost Hunt!")
+@bot.tree.command(name="check-supporter", description="Gives you the supporter role if you have a gamepass from Catulus' Roblox game Ghost Hunt!")
 async def checkSupporter(interaction: discord.Interaction):
     print(f"{formatUsername(interaction.user)} ran /check-supporter")
     await interaction.response.send_message("# >> Katsuprofiles <<\n\> Getting Roblox linked accounts...", ephemeral=True)
@@ -901,7 +901,7 @@ async def supporter(interaction: discord.Interaction):
     )
     embed.add_field(name="Perks", value="\> ⭐ Special badge on your KatsuProfile\n\> 🎨 Extra customisation options on your KatsuProfile\n\> 🎮 Exclusive events for Supporters", inline=False)
     embed.add_field(name="How to Become a Supporter", value="Purchase any gamepass in [Ghost Hunt](https://www.roblox.com/games/45387032/). After purchasing, run `/check-supporter` to activate your perks!", inline=False)
-    embed.set_footer(text="Thank you for supporting Katsune and Ghost Hunt! :3")
+    embed.set_footer(text="Thank you for supporting Katsune and Ghost Hunt!")
     await interaction.response.send_message(embed=embed)
 
 class EditKatsuprofileModal(discord.ui.Modal, title="Edit Your Katsuprofile"):

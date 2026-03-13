@@ -1,4 +1,4 @@
-print(">> Katsune Alpha v1.00.49 <<") # katsune more like kasane teto or HATSUNE LO
+print(">> Katsune Alpha v1.00.50 <<") # katsune more like kasane teto or HATSUNE LO
 # i hope you like the comments btw
 # btw when you startup this bot you get a LOT of print messages saying invalid escape sequence or smth like smth to do with backslashes, ignore those (this only happens if you're using default strings and have not modified them in any way)
 # [ modules ]
@@ -45,6 +45,7 @@ anonchannelid = 1128811704726339614 # channel to send anonymous messages
 katsunelogid = 1233388519075086366 # channel to send anonymous message reports, etc
 verifiedroleid = 1129960240922759218 # the verified role's id
 goodnoodleroleid = 1107836361920217118 # the good noodle role's id
+trapchannelid = 1481803449942147254 # if a spam bot posts here they get BANNED
 adminroleids = [883261775510921256, 883261098059522078] # users with these role ids gain specific permisions
 powerusers = [723053854194663456, 627196747676123146] # users with these ids gain even more perms, but do not have the same perms as the above
 robloxgameid = 6869030592 # roblox: the game id that has its datastores linked or smth
@@ -300,6 +301,20 @@ async def on_member_remove(member):
     await sendbye(member.mention)
     logchannel = bot.get_channel(katsunelogid)
     await logchannel.send(f"{formatUsername(member)} has left the server.")
+
+@bot.event 
+async def on_message(message):
+    if message.channel.id == trapchannelid and not message.author.bot: # if a message is sent in the trap channel, ban the user (this is for spam bots)
+        try:
+            await message.delete() # delete the message just in case
+            await message.author.ban(reason="Spam bot detected in trap channel.")
+            logchannel = bot.get_channel(katsunelogid)
+            await logchannel.send(f"Banned {formatUsername(message.author)} for being a spam bot.")
+        except Exception:
+            print(f"Failed to ban {formatUsername(message.author)} for being a spam bot!")
+            logchannel = bot.get_channel(katsunelogid)
+            await logchannel.send(f"Failed to ban {formatUsername(message.author)} for being a spam bot! Please check the bot's permissions and make sure it can ban members.")
+            traceback.print_exc()
 
 # [ slash commands + others ]
 # --roblox--
